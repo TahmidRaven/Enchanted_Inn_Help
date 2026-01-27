@@ -1,6 +1,5 @@
 import { _decorator, Component, Node, Vec3, EventTouch } from 'cc';
-import { GameManager } from './GameManager'; // Ensure filename is GameManager.ts
-import { Wheat } from './Wheat'; // Ensure filename is Wheat.ts
+import { GameManager } from './GameManager'; 
 
 const { ccclass, property } = _decorator;
 
@@ -18,7 +17,7 @@ export class Draggable extends Component {
 
     onTouchStart(event: EventTouch) {
         this.startPos.set(this.node.worldPosition);
-        this.node.setSiblingIndex(99); // Bring to front
+        this.node.setSiblingIndex(100); 
     }
 
     onTouchMove(event: EventTouch) {
@@ -38,8 +37,6 @@ export class Draggable extends Component {
                 this.node.setWorldPosition(this.startPos);
             }
         } else {
-            // Fallback: try to find it if not assigned
-            this.gm = Node.find("Canvas/GameManager")?.getComponent(GameManager);
             this.node.setWorldPosition(this.startPos);
         }
     }

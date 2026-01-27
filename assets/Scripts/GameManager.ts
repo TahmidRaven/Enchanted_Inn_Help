@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec3 } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween } from 'cc';
 import { Wheat } from './Wheat';
 import { Draggable } from './Draggable';
 
@@ -8,16 +8,23 @@ const { ccclass, property } = _decorator;
 export class GameManager extends Component {
     @property(Prefab) wheatPrefab: Prefab = null!;
     @property([Node]) slots: Node[] = []; 
+    @property(Node) gridContainer: Node = null!;
 
     private occupancy: (Node | null)[] = new Array(25).fill(null);
     private score: number = 0;
 
-    start() {
-        this.spawnWheat();
-        this.spawnWheat();
+    onSpawnButtonPressed() {
+        if (this.gridContainer) {
+            this.gridContainer.active = true;
+        }
+
+        this.spawnSpecificLevel(0);
+        this.spawnSpecificLevel(0);
+        this.spawnSpecificLevel(1);
+        this.spawnSpecificLevel(2);
     }
 
-    spawnWheat() {
+    private spawnSpecificLevel(level: number) {
         const available = this.occupancy.map((v, i) => v === null ? i : null).filter(v => v !== null) as number[];
         if (available.length === 0) return;
 
@@ -28,19 +35,34 @@ export class GameManager extends Component {
         wheatNode.setParent(this.slots[idx]);
         wheatNode.setPosition(0, 0, 0);
 
-        // Link references
-        const wheatScript = wheatNode.getComponent(Wheat)!;
-        const dragScript = wheatNode.getComponent(Draggable)!;
+        // --- Spawn Animation ---
+        wheatNode.setScale(new Vec3(0, 0, 0)); // Start invisible
+        tween(wheatNode)
+            .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+            .start();
+
+        const wheatScript = wheatNode.getComponent(Wheat);
+        const dragScript = wheatNode.getComponent(Draggable);
         
-        wheatScript.currentSlotIndex = idx;
-        wheatScript.updateVisual();
-        dragScript.gm = this; // Manually assign the GM
+        if (wheatScript) {
+            wheatScript.level = level;
+            wheatScript.currentSlotIndex = idx;
+            wheatScript.updateVisual();
+        }
+        
+        if (dragScript) {
+            dragScript.gm = this;
+        }
+    }
+
+    // This is no longer called automatically after merge
+    spawnWheat() {
+        this.spawnSpecificLevel(0);
     }
 
     getNearestSlot(worldPos: Vec3): number {
         let nearestIdx = -1;
-        let minDist = 80; // Distance threshold to snap
-
+        let minDist = 80;
         this.slots.forEach((slot, idx) => {
             const dist = Vec3.distance(worldPos, slot.worldPosition);
             if (dist < minDist) {
@@ -57,7 +79,6 @@ export class GameManager extends Component {
         const targetOccupant = this.occupancy[targetIdx];
 
         if (!targetOccupant) {
-            // Move to empty slot
             this.occupancy[oldIdx] = null;
             this.occupancy[targetIdx] = draggedNode;
             draggedNode.setParent(this.slots[targetIdx]);
@@ -65,21 +86,24 @@ export class GameManager extends Component {
             scriptA.currentSlotIndex = targetIdx;
         } else if (targetOccupant !== draggedNode) {
             const scriptB = targetOccupant.getComponent(Wheat)!;
-
             if (scriptA.level === scriptB.level) {
-                // Merge
                 this.occupancy[oldIdx] = null;
-                const reachedMax = scriptB.upgrade();
+                
+                // --- Merge Animation ---
+                // Scale target up and back down to signal growth
+                tween(targetOccupant)
+                    .to(0.1, { scale: new Vec3(1.4, 1.4, 1.4) })
+                    .to(0.1, { scale: new Vec3(1, 1, 1) })
+                    .start();
 
-
-                if (reachedMax) {
+                if (scriptB.upgrade()) {
                     this.addScore(1);
                     this.occupancy[targetIdx] = null;
                     targetOccupant.destroy();
                 }
-
+                
                 draggedNode.destroy();
-                this.spawnWheat();
+                // spawnWheat() removed here as requested
             } else {
                 draggedNode.setPosition(0, 0, 0);
             }

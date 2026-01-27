@@ -18,7 +18,6 @@ export class Wheat extends Component {
 
     upgrade(): boolean {
         this.level++;
-        // Returns true if it reaches level 4 (points stage)
         if (this.level > 3) return true; 
         this.updateVisual();
         return false;
