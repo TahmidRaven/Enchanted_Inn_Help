@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, EventTouch } from 'cc';
 import { GameManager } from './GameManager'; 
+import { MergeItem } from './MergeItem';
 
 const { ccclass, property } = _decorator;
 
@@ -17,6 +18,7 @@ export class Draggable extends Component {
 
     onTouchStart(event: EventTouch) {
         this.startPos.set(this.node.worldPosition);
+        // Ensure the dragged item is on top of other grid items
         this.node.setSiblingIndex(100); 
     }
 
