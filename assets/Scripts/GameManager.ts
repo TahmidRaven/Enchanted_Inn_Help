@@ -6,7 +6,7 @@ const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
 export class GameManager extends Component {
-    @property([Prefab]) stagePrefabs: Prefab[] = []; // Assign: 0:Trash, 1:Wood, 2:Tools, 3:Egg
+    @property([Prefab]) stagePrefabs: Prefab[] = []; // 0:Trash, 1:Wood, 2:Tools, 3:Egg
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!;
 
@@ -30,7 +30,6 @@ export class GameManager extends Component {
         itemNode.setParent(this.slots[idx]);
         itemNode.setPosition(0, 0, 0);
 
-        // Spawn Animation [cite: 30]
         itemNode.setScale(new Vec3(0, 0, 0));
         tween(itemNode).to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' }).start();
 
@@ -77,14 +76,13 @@ export class GameManager extends Component {
                 // Merge logic
                 this.occupancy[oldIdx] = null;
                 
-                // Merge feedback animation [cite: 30]
                 tween(targetOccupant)
                     .to(0.1, { scale: new Vec3(1.3, 1.3, 1.3) })
                     .to(0.1, { scale: new Vec3(1, 1, 1) })
                     .start();
 
                 if (scriptB.upgrade()) {
-                    // Item completed its 4th stage
+                    // Item completed its 4th stage -> final goal
                     this.completeStageGoal(targetOccupant, targetIdx);
                 }
                 draggedNode.destroy();
@@ -101,10 +99,9 @@ export class GameManager extends Component {
         node.destroy();
         
         console.log(`Finished stage: ${this.currentStageIndex}`);
-        // Advance to next item type (Trash -> Wood -> Tools -> Egg) 
+        // initial logic will change later -> next item type (Trash -> Wood -> Tools -> Egg) 
         if (this.currentStageIndex < this.stagePrefabs.length - 1) {
             this.currentStageIndex++;
-            // Optional: Auto-spawn one of the new items to guide the player
             this.spawnItem(0);
         } else {
             console.log("Playable Complete! Show Win Badge.");

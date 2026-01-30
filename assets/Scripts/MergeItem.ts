@@ -4,7 +4,7 @@ const { ccclass, property } = _decorator;
 @ccclass('MergeItem')
 export class MergeItem extends Component {
     @property([SpriteFrame])
-    levelSprites: SpriteFrame[] = []; // Assign 4 sprites here (e.g., Small Trash -> Large Trash)
+    levelSprites: SpriteFrame[] = []; 
 
     public level: number = 0;
     public currentSlotIndex: number = -1;
@@ -18,7 +18,6 @@ export class MergeItem extends Component {
 
     upgrade(): boolean {
         this.level++;
-        // Returns true if the item has evolved past the 4th stage (index 3)
         if (this.level > 3) return true; 
         
         this.updateVisual();

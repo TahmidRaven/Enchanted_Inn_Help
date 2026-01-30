@@ -18,7 +18,6 @@ export class Draggable extends Component {
 
     onTouchStart(event: EventTouch) {
         this.startPos.set(this.node.worldPosition);
-        // Ensure the dragged item is on top of other grid items
         this.node.setSiblingIndex(100); 
     }
 
