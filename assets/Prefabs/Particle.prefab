@@ -109,7 +109,7 @@
       "b": 255,
       "a": 255
     },
-    "duration": 0.1,
+    "duration": 0.125,
     "emissionRate": 1000,
     "life": 0.6,
     "lifeVar": 0.6,
@@ -165,9 +165,9 @@
     "_totalParticles": 10000,
     "_startColor": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 204,
-      "b": 0,
+      "r": 31,
+      "g": 49,
+      "b": 180,
       "a": 255
     },
     "_startColorVar": {
@@ -179,9 +179,9 @@
     },
     "_endColor": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 224,
-      "b": 0,
+      "r": 43,
+      "g": 33,
+      "b": 250,
       "a": 140
     },
     "_endColorVar": {
