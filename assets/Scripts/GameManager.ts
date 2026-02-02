@@ -9,17 +9,30 @@ export class GameManager extends Component {
     @property([Prefab]) stagePrefabs: Prefab[] = []; 
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!;
-
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
+
+    // --- Step 01: Backgrounds & Trash ---
     @property(Node) bgWinter: Node = null!;
     @property(Node) bgSummer: Node = null!;
-    @property(Node) medievalTrash: Node = null!; 
+    @property(Node) medievalTrash: Node = null!;
     @property(Node) trashItemsParent: Node = null!; 
+
+    // --- Step 02: Windows ---
+    @property(Node) brokenWindows: Node = null!;
+    @property(Node) fixedWindows: Node = null!;
+
+    // --- Step 03: Tables ---
+    @property(Node) brokenTables: Node = null!;
+    @property(Node) fixedTables: Node = null!;
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
 
     onLoad() {
         if (this.gridContainer) this.gridContainer.active = false;
+        // Hide fixed versions at start
+        if (this.bgSummer) this.bgSummer.active = false;
+        if (this.fixedWindows) this.fixedWindows.active = false;
+        if (this.fixedTables) this.fixedTables.active = false;
     }
 
     public spawnFromSpawner(prefabIndex: number) {
@@ -93,13 +106,18 @@ export class GameManager extends Component {
                     .to(0.1, { scale: new Vec3(1, 1, 1), angle: 0 })
                     .call(() => {
                         if (scriptB.upgrade()) {
-                            // Wait 1 second after merging the final step before hiding grid
+                            // Wait 1 second after merging final step
                             this.scheduleOnce(() => {
                                 this.hideGridAndClearItems();
+                                
+                                // Step 01 (Index 0) uses Collector logic
                                 if (scriptB.prefabIndex === 0) {
                                     this.triggerTrashCollection(targetOccupant);
-                                } else {
+                                } 
+                                // Step 02 & 03 (Index 1 & 2) use Instant Swap logic
+                                else {
                                     targetOccupant.destroy();
+                                    this.executeTransition(scriptB.prefabIndex);
                                 }
                             }, 1.0);
                         }
@@ -108,33 +126,15 @@ export class GameManager extends Component {
             } else {
                 draggedNode.setPosition(0, 0, 0);
             }
-        } else {
-            draggedNode.setPosition(0, 0, 0);
         }
-    }
-
-    private playMergeParticle(worldPos: Vec3) {
-        if (!this.mergeParticlePrefab) return;
-        const p = instantiate(this.mergeParticlePrefab);
-        p.setParent(this.node.parent);
-        p.setWorldPosition(worldPos);
-        const ps = p.getComponent(ParticleSystem2D);
-        if (ps) ps.resetSystem();
-        this.scheduleOnce(() => { if(p.isValid) p.destroy(); }, 2.0);
-    }
-
-    private hideGridAndClearItems() {
-        if (this.gridContainer) this.gridContainer.active = false;
-        this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
-        this.occupancy.fill(null);
     }
 
     private triggerTrashCollection(finalMergeNode: Node) {
         if (this.medievalTrash) {
             this.medievalTrash.active = true;
-            this.medievalTrash.setScale(new Vec3(0, 0, 0));
+            this.medievalTrash.setScale(Vec3.ZERO);
             tween(this.medievalTrash)
-                .to(0.6, { scale: new Vec3(1, 1, 1) }, { easing: 'elasticOut' })
+                .to(0.6, { scale: Vec3.ONE }, { easing: 'elasticOut' })
                 .call(() => { this.collectItemsOneByOne(finalMergeNode); })
                 .start();
         }
@@ -145,74 +145,80 @@ export class GameManager extends Component {
         let itemsToAnimate: Node[] = [];
         if (finalNode && finalNode.isValid) itemsToAnimate.push(finalNode);
         if (this.trashItemsParent) {
-            this.trashItemsParent.children.forEach(trash => { if (trash && trash.isValid) itemsToAnimate.push(trash); });
+            this.trashItemsParent.children.forEach(trash => itemsToAnimate.push(trash));
         }
 
         let finishedCount = 0;
-        const totalItems = itemsToAnimate.length;
-
         itemsToAnimate.forEach((item, idx) => {
             const startPos = item.worldPosition.clone();
             const controlPoint = new Vec3((startPos.x + targetPos.x) / 2, Math.max(startPos.y, targetPos.y) + 400, 0);
             let obj = { t: 0 };
-            
             tween(obj).delay(idx * 0.15).to(0.7, { t: 1 }, {
                 easing: 'quadIn',
                 onUpdate: () => {
-                    if (!item || !item.isValid) return;
+                    if (!item.isValid) return;
                     item.setWorldPosition(this.getBezierPoint(startPos, controlPoint, targetPos, obj.t));
                     item.angle += 20;
                     item.setScale(new Vec3(1 - obj.t, 1 - obj.t, 1 - obj.t));
                 }
             }).call(() => {
-                if (item && item.isValid) item.active = false;
+                item.active = false;
                 this.shakeTrash(); 
                 finishedCount++;
-                
-                if (finishedCount === totalItems) {
-                    this.transitionToSummer();
-                    // Destroy the medieval trash after a short delay so the transition is visible
-                    tween(this.medievalTrash)
-                        .delay(1.5) 
-                        .to(0.5, { scale: new Vec3(0, 0, 0) }, { easing: 'backIn' })
-                        .call(() => {
-                            if (this.medievalTrash && this.medievalTrash.isValid) {
-                                this.medievalTrash.active = false;
-                                // If you want to fully destroy it: this.medievalTrash.destroy();
-                            }
-                        })
-                        .start();
+                if (finishedCount === itemsToAnimate.length) {
+                    this.executeTransition(0);
+                    // Vanish collector
+                    tween(this.medievalTrash).delay(0.5).to(0.4, { scale: Vec3.ZERO }).call(() => { this.medievalTrash.active = false; }).start();
                 }
             }).start();
         });
     }
 
+    private executeTransition(stepIndex: number) {
+        if (stepIndex === 0) this.fadeNodes(this.bgWinter, this.bgSummer);
+        else if (stepIndex === 1) this.fadeNodes(this.brokenWindows, this.fixedWindows);
+        else if (stepIndex === 2) this.fadeNodes(this.brokenTables, this.fixedTables);
+    }
+
+    private fadeNodes(oldNode: Node, newNode: Node) {
+        if (!oldNode || !newNode) return;
+        newNode.active = true;
+        const oldSprite = oldNode.getComponent(Sprite);
+        const newSprite = newNode.getComponent(Sprite);
+
+        if (oldSprite) tween(oldSprite).to(1.5, { color: new Color(255, 255, 255, 0) }).start();
+        if (newSprite) {
+            newSprite.color = new Color(255, 255, 255, 0);
+            tween(newSprite).to(1.5, { color: new Color(255, 255, 255, 255) }).start();
+        }
+    }
+
     private shakeTrash() {
         if (!this.medievalTrash) return;
-        tween(this.medievalTrash)
-            .by(0.05, { position: new Vec3(5, 0, 0) })
-            .by(0.05, { position: new Vec3(-10, 0, 0) })
-            .by(0.05, { position: new Vec3(5, 0, 0) })
-            .start();
+        tween(this.medievalTrash).by(0.05, { position: new Vec3(5, 0, 0) }).by(0.05, { position: new Vec3(-10, 0, 0) }).by(0.05, { position: new Vec3(5, 0, 0) }).start();
+    }
+
+    private hideGridAndClearItems() {
+        if (this.gridContainer) this.gridContainer.active = false;
+        this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
+        this.occupancy.fill(null);
     }
 
     private getBezierPoint(p0: Vec3, p1: Vec3, p2: Vec3, t: number): Vec3 {
-        const out = new Vec3();
-        out.x = Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x;
-        out.y = Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y;
-        return out;
+        return new Vec3(
+            Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p2.x,
+            Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p2.y,
+            0
+        );
     }
 
-    private transitionToSummer() {
-        if (this.bgWinter && this.bgSummer) {
-            const winterSprite = this.bgWinter.getComponent(Sprite);
-            if (winterSprite) tween(winterSprite).to(1.5, { color: new Color(255, 255, 255, 0) }).start();
-            this.bgSummer.active = true;
-            const summerSprite = this.bgSummer.getComponent(Sprite);
-            if (summerSprite) {
-                summerSprite.color = new Color(255, 255, 255, 0);
-                tween(summerSprite).to(1.5, { color: new Color(255, 255, 255, 255) }).start();
-            }
-        }
+    private playMergeParticle(worldPos: Vec3) {
+        if (!this.mergeParticlePrefab) return;
+        const p = instantiate(this.mergeParticlePrefab);
+        p.setParent(this.node.parent);
+        p.setWorldPosition(worldPos);
+        const ps = p.getComponent(ParticleSystem2D);
+        if (ps) ps.resetSystem();
+        this.scheduleOnce(() => { if(p.isValid) p.destroy(); }, 2.0);
     }
 }
