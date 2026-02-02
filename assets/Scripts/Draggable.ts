@@ -1,6 +1,5 @@
 import { _decorator, Component, Node, Vec3, EventTouch } from 'cc';
 import { GameManager } from './GameManager'; 
-import { MergeItem } from './MergeItem';
 
 const { ccclass, property } = _decorator;
 
@@ -10,35 +9,33 @@ export class Draggable extends Component {
     public gm: GameManager = null!;
 
     onLoad() {
-        this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
-        this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
-        this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+        this.node.on(Node.EventType.TOUCH_START, (e: EventTouch) => {
+            this.startPos.set(this.node.worldPosition);
+            this.node.setSiblingIndex(100); 
+        }, this);
+
+        this.node.on(Node.EventType.TOUCH_MOVE, (e: EventTouch) => {
+            const loc = e.getUILocation();
+            this.node.setWorldPosition(new Vec3(loc.x, loc.y, 0));
+        }, this);
+
+        this.node.on(Node.EventType.TOUCH_END, this.handleEnd, this);
+        this.node.on(Node.EventType.TOUCH_CANCEL, this.handleEnd, this);
     }
 
-    onTouchStart(event: EventTouch) {
-        this.startPos.set(this.node.worldPosition);
-        this.node.setSiblingIndex(100); 
-    }
-
-    onTouchMove(event: EventTouch) {
-        const touchPos = event.getUILocation();
-        this.node.setWorldPosition(new Vec3(touchPos.x, touchPos.y, 0));
-    }
-
-    onTouchEnd(event: EventTouch) {
-        const touchPos = event.getUILocation();
-        const worldTouch = new Vec3(touchPos.x, touchPos.y, 0);
+    handleEnd(event: EventTouch) {
+        const loc = event.getUILocation();
+        const worldPos = new Vec3(loc.x, loc.y, 0);
         
         if (this.gm) {
-            const nearestSlotIndex = this.gm.getNearestSlot(worldTouch);
-            if (nearestSlotIndex !== -1) {
-                this.gm.handleMove(this.node, nearestSlotIndex);
+            const nearest = this.gm.getNearestSlot(worldPos);
+            if (nearest !== -1) {
+                this.gm.handleMove(this.node, nearest);
             } else {
-                this.node.setWorldPosition(this.startPos);
+                this.node.setPosition(0, 0, 0);
             }
         } else {
-            this.node.setWorldPosition(this.startPos);
+            this.node.setPosition(0, 0, 0);
         }
     }
 }

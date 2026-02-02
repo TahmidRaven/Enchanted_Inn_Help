@@ -6,25 +6,35 @@ const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
 export class GameManager extends Component {
-    @property([Prefab]) stagePrefabs: Prefab[] = []; // 0:Trash, 1:Wood, 2:Tools, 3:Egg
+    @property([Prefab]) stagePrefabs: Prefab[] = []; 
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!;
 
-    private currentStageIndex: number = 0;
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
+    private itemsCreatedCount: number = 0;
 
-    
-    onSpawnButtonPressed() {
+    public spawnFromSpawner(prefabIndex: number) {
         if (this.gridContainer) this.gridContainer.active = true;
-        this.spawnItem(0); // Spawns level 0 of the current stage prefab
+
+        // Sequence to help user reach Level 3: 
+        // Two Lvl 0, One Lvl 1, One Lvl 2
+        const coreLevels = [0, 0, 1, 2];
+        coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
+
+        // Junk Items: 2 random items from other prefabs
+        for (let i = 0; i < 2; i++) {
+            let junkIdx = Math.floor(Math.random() * this.stagePrefabs.length);
+            if (junkIdx === prefabIndex) junkIdx = (junkIdx + 1) % this.stagePrefabs.length;
+            this.spawnItem(Math.random() > 0.5 ? 0 : 1, junkIdx);
+        }
     }
 
-    private spawnItem(level: number) {
+    private spawnItem(level: number, prefabIdx: number) {
         const available = this.occupancy.map((v, i) => v === null ? i : null).filter(v => v !== null) as number[];
         if (available.length === 0) return;
 
         const idx = available[Math.floor(Math.random() * available.length)];
-        const itemNode = instantiate(this.stagePrefabs[this.currentStageIndex]);
+        const itemNode = instantiate(this.stagePrefabs[prefabIdx]);
         
         this.occupancy[idx] = itemNode;
         itemNode.setParent(this.slots[idx]);
@@ -46,7 +56,7 @@ export class GameManager extends Component {
 
     getNearestSlot(worldPos: Vec3): number {
         let nearestIdx = -1;
-        let minDist = 100; // Threshold for snapping
+        let minDist = 100; 
         this.slots.forEach((slot, idx) => {
             const dist = Vec3.distance(worldPos, slot.worldPosition);
             if (dist < minDist) {
@@ -63,7 +73,6 @@ export class GameManager extends Component {
         const targetOccupant = this.occupancy[targetIdx];
 
         if (!targetOccupant) {
-            // Move to empty slot
             this.occupancy[oldIdx] = null;
             this.occupancy[targetIdx] = draggedNode;
             draggedNode.setParent(this.slots[targetIdx]);
@@ -73,18 +82,20 @@ export class GameManager extends Component {
             const scriptB = targetOccupant.getComponent(MergeItem)!;
             
             if (scriptA.level === scriptB.level) {
-                // Merge logic
                 this.occupancy[oldIdx] = null;
                 
+                // Spin and Scale merge effect
                 tween(targetOccupant)
-                    .to(0.1, { scale: new Vec3(1.3, 1.3, 1.3) })
-                    .to(0.1, { scale: new Vec3(1, 1, 1) })
+                    .to(0.2, { scale: new Vec3(1.4, 1.4, 1.4), angle: 360 }, { easing: 'sineOut' })
+                    .to(0.1, { scale: new Vec3(1, 1, 1), angle: 0 })
+                    .call(() => {
+                        // upgrade returns true if it hits Level 3
+                        if (scriptB.upgrade()) {
+                            this.completeStageGoal(targetOccupant, targetIdx);
+                        }
+                    })
                     .start();
 
-                if (scriptB.upgrade()) {
-                    // Item completed its 4th stage -> final goal
-                    this.completeStageGoal(targetOccupant, targetIdx);
-                }
                 draggedNode.destroy();
             } else {
                 draggedNode.setPosition(0, 0, 0);
@@ -95,16 +106,22 @@ export class GameManager extends Component {
     }
 
     private completeStageGoal(node: Node, index: number) {
+        this.itemsCreatedCount++;
         this.occupancy[index] = null;
         node.destroy();
         
-        console.log(`Finished stage: ${this.currentStageIndex}`);
-        // initial logic will change later -> next item type (Trash -> Wood -> Tools -> Egg) 
-        if (this.currentStageIndex < this.stagePrefabs.length - 1) {
-            this.currentStageIndex++;
-            this.spawnItem(0);
-        } else {
-            console.log("Playable Complete! Show Win Badge.");
-        }
+        console.log(`Item ${this.itemsCreatedCount} Created!`);
+        
+        if (this.gridContainer) this.gridContainer.active = false;
+        this.clearGrid();
+    }
+
+    private clearGrid() {
+        this.occupancy.forEach((node, i) => {
+            if (node) {
+                node.destroy();
+                this.occupancy[i] = null;
+            }
+        });
     }
 }

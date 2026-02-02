@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "wheatprefab-001",
+    "_name": "wheatprefabTrash",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "wheatprefab-001",
+    "_name": "wheatprefabTrash",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -51,8 +51,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
+      "x": 0.25,
+      "y": 0.35,
       "z": 1
     },
     "_mobility": 0,
@@ -152,19 +152,19 @@
     },
     "levelSprites": [
       {
-        "__uuid__": "992bb4a0-cf7f-4f47-8894-c5f8fe4dc814@f9941",
+        "__uuid__": "db751e86-3916-4939-9510-2e6df4f28e0f@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "5a5bbe36-dddc-4c65-b172-1eac9da810f0@f9941",
+        "__uuid__": "c5d07541-ac95-4a34-86c6-f4c78b4fe17c@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "8f0d2397-acba-4b9f-a732-6a802652c5f2@f9941",
+        "__uuid__": "2c40ab83-2905-4cf2-93e4-e8f8c47c970d@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "85385355-586a-4c25-8861-3ca1cc058f85@f9941",
+        "__uuid__": "79fee069-b576-4a17-afd4-b041fa4016ca@f9941",
         "__expectedType__": "cc.SpriteFrame"
       }
     ],

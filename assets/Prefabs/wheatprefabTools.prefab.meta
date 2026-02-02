@@ -2,12 +2,12 @@
   "ver": "1.1.50",
   "importer": "prefab",
   "imported": true,
-  "uuid": "628cb5b8-6a27-40bd-882b-dd0cf1f16c2b",
+  "uuid": "5c59246e-5aef-43b0-9b13-aa134799505a",
   "files": [
     ".json"
   ],
   "subMetas": {},
   "userData": {
-    "syncNodeName": "wheatprefab-001"
+    "syncNodeName": "wheatprefabTools"
   }
 }
