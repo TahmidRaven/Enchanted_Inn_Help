@@ -93,9 +93,15 @@ export class GameManager extends Component {
                     .to(0.1, { scale: new Vec3(1, 1, 1), angle: 0 })
                     .call(() => {
                         if (scriptB.upgrade()) {
-                            this.hideGridAndClearItems();
-                            if (scriptB.prefabIndex === 0) this.triggerTrashCollection(targetOccupant);
-                            else targetOccupant.destroy();
+                            // Wait 1 second after merging the final step before hiding grid
+                            this.scheduleOnce(() => {
+                                this.hideGridAndClearItems();
+                                if (scriptB.prefabIndex === 0) {
+                                    this.triggerTrashCollection(targetOccupant);
+                                } else {
+                                    targetOccupant.destroy();
+                                }
+                            }, 1.0);
                         }
                     }).start();
                 draggedNode.destroy();
@@ -105,7 +111,6 @@ export class GameManager extends Component {
         } else {
             draggedNode.setPosition(0, 0, 0);
         }
-
     }
 
     private playMergeParticle(worldPos: Vec3) {
@@ -133,8 +138,6 @@ export class GameManager extends Component {
                 .call(() => { this.collectItemsOneByOne(finalMergeNode); })
                 .start();
         }
-
-
     }
 
     private collectItemsOneByOne(finalNode: Node) {
@@ -146,10 +149,13 @@ export class GameManager extends Component {
         }
 
         let finishedCount = 0;
+        const totalItems = itemsToAnimate.length;
+
         itemsToAnimate.forEach((item, idx) => {
             const startPos = item.worldPosition.clone();
             const controlPoint = new Vec3((startPos.x + targetPos.x) / 2, Math.max(startPos.y, targetPos.y) + 400, 0);
             let obj = { t: 0 };
+            
             tween(obj).delay(idx * 0.15).to(0.7, { t: 1 }, {
                 easing: 'quadIn',
                 onUpdate: () => {
@@ -162,15 +168,32 @@ export class GameManager extends Component {
                 if (item && item.isValid) item.active = false;
                 this.shakeTrash(); 
                 finishedCount++;
-                if (finishedCount === itemsToAnimate.length) this.transitionToSummer();
+                
+                if (finishedCount === totalItems) {
+                    this.transitionToSummer();
+                    // Destroy the medieval trash after a short delay so the transition is visible
+                    tween(this.medievalTrash)
+                        .delay(1.5) 
+                        .to(0.5, { scale: new Vec3(0, 0, 0) }, { easing: 'backIn' })
+                        .call(() => {
+                            if (this.medievalTrash && this.medievalTrash.isValid) {
+                                this.medievalTrash.active = false;
+                                // If you want to fully destroy it: this.medievalTrash.destroy();
+                            }
+                        })
+                        .start();
+                }
             }).start();
         });
     }
 
     private shakeTrash() {
         if (!this.medievalTrash) return;
-        tween(this.medievalTrash).by(0.05, { position: new Vec3(5, 0, 0) }).by(0.05, { position: new Vec3(-10, 0, 0) }).by(0.05, { position: new Vec3(5, 0, 0) }).start();
-    
+        tween(this.medievalTrash)
+            .by(0.05, { position: new Vec3(5, 0, 0) })
+            .by(0.05, { position: new Vec3(-10, 0, 0) })
+            .by(0.05, { position: new Vec3(5, 0, 0) })
+            .start();
     }
 
     private getBezierPoint(p0: Vec3, p1: Vec3, p2: Vec3, t: number): Vec3 {
