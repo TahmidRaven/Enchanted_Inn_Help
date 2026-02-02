@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Particle",
+    "_name": "MergeParticleEffect",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Particle",
+    "_name": "MergeParticleEffect",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -45,8 +45,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
+      "x": 0.5,
+      "y": 0.5,
       "z": 1
     },
     "_mobility": 0,
@@ -73,8 +73,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 100,
-      "height": 100
+      "width": 200,
+      "height": 200
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -109,16 +109,16 @@
       "b": 255,
       "a": 255
     },
-    "duration": 0.125,
-    "emissionRate": 1000,
-    "life": 0.6,
-    "lifeVar": 0.6,
+    "duration": 0.075,
+    "emissionRate": 2000,
+    "life": 0.45,
+    "lifeVar": 0.45,
     "angle": 0,
     "angleVar": 0,
-    "startSize": 20,
+    "startSize": 10,
     "startSizeVar": 5,
-    "endSize": 27,
-    "endSizeVar": 0,
+    "endSize": 30,
+    "endSizeVar": 1,
     "startSpin": 0,
     "startSpinVar": 0,
     "endSpin": 0,
@@ -133,7 +133,7 @@
       "x": 0,
       "y": 0
     },
-    "emitterMode": 1,
+    "emitterMode": 0,
     "gravity": {
       "__type__": "cc.Vec2",
       "x": 0.25,
@@ -146,9 +146,9 @@
     "radialAccel": -671.0499877929688,
     "radialAccelVar": 0,
     "rotationIsDir": false,
-    "startRadius": 150,
+    "startRadius": 100,
     "startRadiusVar": 40,
-    "endRadius": 150,
+    "endRadius": 100,
     "endRadiusVar": 20,
     "rotatePerS": 270,
     "rotatePerSVar": 360,
@@ -165,9 +165,9 @@
     "_totalParticles": 10000,
     "_startColor": {
       "__type__": "cc.Color",
-      "r": 31,
-      "g": 49,
-      "b": 180,
+      "r": 245,
+      "g": 13,
+      "b": 189,
       "a": 255
     },
     "_startColorVar": {
@@ -179,9 +179,9 @@
     },
     "_endColor": {
       "__type__": "cc.Color",
-      "r": 43,
-      "g": 33,
-      "b": 250,
+      "r": 138,
+      "g": 14,
+      "b": 143,
       "a": 140
     },
     "_endColorVar": {
