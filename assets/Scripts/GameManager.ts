@@ -105,6 +105,7 @@ export class GameManager extends Component {
         } else {
             draggedNode.setPosition(0, 0, 0);
         }
+
     }
 
     private playMergeParticle(worldPos: Vec3) {
@@ -132,6 +133,8 @@ export class GameManager extends Component {
                 .call(() => { this.collectItemsOneByOne(finalMergeNode); })
                 .start();
         }
+
+
     }
 
     private collectItemsOneByOne(finalNode: Node) {
@@ -167,6 +170,7 @@ export class GameManager extends Component {
     private shakeTrash() {
         if (!this.medievalTrash) return;
         tween(this.medievalTrash).by(0.05, { position: new Vec3(5, 0, 0) }).by(0.05, { position: new Vec3(-10, 0, 0) }).by(0.05, { position: new Vec3(5, 0, 0) }).start();
+    
     }
 
     private getBezierPoint(p0: Vec3, p1: Vec3, p2: Vec3, t: number): Vec3 {
