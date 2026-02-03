@@ -11,7 +11,9 @@ export class GameManager extends Component {
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
-    @property([Spawner]) spawnerComponents: Spawner[] = [];
+
+    // FIX: Use arrow function for the array type as well
+    @property({ type: [() => Spawner] }) spawnerComponents: Spawner[] = [];
 
     @property(Node) allasseShiver: Node = null!;
     @property(Node) allasseHappy: Node = null!;
@@ -34,9 +36,8 @@ export class GameManager extends Component {
     public currentStepIndex: number = 0; 
     private readonly TOTAL_STEPS = 4;
 
-    // --- Hint System Properties ---
     private hintTimer: number = 0;
-    private readonly HINT_DELAY: number = 3.0; // 3 seconds of inactivity
+    private readonly HINT_DELAY: number = 3.0; 
     private activeHintNodes: Node[] = [];
 
     onLoad() {
@@ -50,7 +51,6 @@ export class GameManager extends Component {
     }
 
     update(dt: number) {
-        // Increment timer if grid is active and no hint is playing
         if (this.gridContainer && this.gridContainer.active && this.activeHintNodes.length === 0) {
             this.hintTimer += dt;
             if (this.hintTimer >= this.HINT_DELAY) {
@@ -71,22 +71,17 @@ export class GameManager extends Component {
 
     private findAndShowHint() {
         this.clearHints();
-
-        // Search for matching pairs in the occupancy grid
         for (let i = 0; i < this.occupancy.length; i++) {
             const nodeA = this.occupancy[i];
             if (!nodeA) continue;
             const scriptA = nodeA.getComponent(MergeItem)!;
-
             for (let j = i + 1; j < this.occupancy.length; j++) {
                 const nodeB = this.occupancy[j];
                 if (!nodeB) continue;
                 const scriptB = nodeB.getComponent(MergeItem)!;
-
-                // Match found: Same level and same item type
                 if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
                     this.applyHintEffect(nodeA, nodeB);
-                    return; // Show only one pair at a time
+                    return; 
                 }
             }
         }
@@ -95,10 +90,7 @@ export class GameManager extends Component {
     private applyHintEffect(nodeA: Node, nodeB: Node) {
         const posA = nodeA.worldPosition;
         const posB = nodeB.worldPosition;
-        
-        // Midpoint calculation handles horizontal, vertical, and diagonal
         const mid = new Vec3((posA.x + posB.x) / 2, (posA.y + posB.y) / 2, 0);
-
         nodeA.getComponent(MergeItem)?.playHint(mid);
         nodeB.getComponent(MergeItem)?.playHint(mid);
         this.activeHintNodes = [nodeA, nodeB];
@@ -154,7 +146,7 @@ export class GameManager extends Component {
         return nearestIdx;
     }
 
-    handleMove(draggedNode: Node, targetIdx: number) {
+    public handleMove(draggedNode: Node, targetIdx: number) {
         this.clearHints();
         const scriptA = draggedNode.getComponent(MergeItem)!;
         const oldIdx = scriptA.currentSlotIndex;
@@ -183,7 +175,6 @@ export class GameManager extends Component {
                                 if (this.spawnerComponents[this.currentStepIndex]) {
                                     this.spawnerComponents[this.currentStepIndex].selfDestruct();
                                 }
-
                                 if (scriptB.prefabIndex === 0) {
                                     this.triggerTrashCollection(targetOccupant);
                                 } else {
@@ -197,7 +188,7 @@ export class GameManager extends Component {
                     }).start();
                 draggedNode.destroy();
             } else {
-                draggedNode.setPosition(0, 0, 0);
+                draggedNode.getComponent(Draggable)?.returnToHome();
             }
         }
     }

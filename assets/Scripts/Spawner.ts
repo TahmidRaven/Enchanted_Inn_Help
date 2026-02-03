@@ -1,16 +1,17 @@
 import { _decorator, Component, Node, CCInteger, Vec3, tween, Tween } from 'cc';
-import { GameManager } from './GameManager';
+// We still import the type for TypeScript intelligence
+import { GameManager } from './GameManager'; 
 const { ccclass, property } = _decorator;
 
 @ccclass('Spawner')
 export class Spawner extends Component {
-    @property(GameManager)
+    // FIX: Use an arrow function to lazily load the type
+    @property({ type: () => GameManager })
     gameManager: GameManager = null!;
 
     @property({ type: CCInteger }) 
     prefabIndex: number = 0; 
 
-    // Explicitly define the generic as Cocos Node to avoid DOM Node conflicts
     private breathingTween: Tween<Node> | null = null;
 
     onLoad() {
@@ -28,7 +29,6 @@ export class Spawner extends Component {
     }
 
     private playBreathingAnimation() {
-        // We cast the target to ensure the Tween matches Tween<Node>
         this.breathingTween = tween(this.node as Node)
             .to(0.8, { scale: new Vec3(1.1, 1.1, 1.1) }, { easing: 'sineInOut' })
             .to(0.8, { scale: new Vec3(1.0, 1.0, 1.0) }, { easing: 'sineInOut' })

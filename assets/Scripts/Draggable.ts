@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, EventTouch, find, tween } from 'cc';
+import { _decorator, Component, Node, Vec3, EventTouch, find, tween, UITransform } from 'cc';
 import { GameManager } from './GameManager'; 
 
 const { ccclass, property } = _decorator;
@@ -7,12 +7,10 @@ const { ccclass, property } = _decorator;
 export class Draggable extends Component {
     private originalParent: Node = null!; 
     private topLayerNode: Node = null!;
-    private savedWorldPos: Vec3 = new Vec3();
     public gm: GameManager = null!;
 
     onLoad() {
         this.topLayerNode = find('Canvas/MergeItemGoOnTop')!;
-
         this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
         this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
@@ -21,15 +19,12 @@ export class Draggable extends Component {
 
     onTouchStart(event: EventTouch) {
         if (this.gm) this.gm.clearHints();
-
         this.originalParent = this.node.parent!;
-        
-        this.node.getWorldPosition(this.savedWorldPos);
+        const worldPos = this.node.worldPosition;
 
         if (this.topLayerNode) {
             this.node.setParent(this.topLayerNode);
-            this.node.setWorldPosition(this.savedWorldPos);
-
+            this.node.setWorldPosition(worldPos);
             tween(this.node as Node)
                 .to(0.1, { scale: new Vec3(1.1, 1.1, 1.1) }, { easing: 'sineOut' })
                 .start();
@@ -51,7 +46,6 @@ export class Draggable extends Component {
 
         if (this.gm) {
             const nearestIdx = this.gm.getNearestSlot(worldTouch);
-            
             if (nearestIdx !== -1) {
                 this.gm.handleMove(this.node, nearestIdx);
             } else {
@@ -63,28 +57,27 @@ export class Draggable extends Component {
     }
 
     private playInvalidDropEffect() {
-        // Feedback shake before returning
         tween(this.node as Node)
             .by(0.05, { position: new Vec3(10, 0, 0) })
             .by(0.05, { position: new Vec3(-20, 0, 0) })
             .by(0.05, { position: new Vec3(10, 0, 0) })
-            .call(() => {
-                this.returnToHome();
-            })
+            .call(() => { this.returnToHome(); })
             .start();
     }
 
-    private returnToHome() {
-        if (this.originalParent) {
-            const homePos = this.originalParent.worldPosition;
+    public returnToHome() {
+        if (this.originalParent && this.originalParent.isValid) {
+            const currentWorldPos = this.node.worldPosition.clone();
+            this.node.setParent(this.originalParent);
+
+            const uiTrans = this.originalParent.getComponent(UITransform);
+            if (uiTrans) {
+                const localPos = uiTrans.convertToNodeSpaceAR(currentWorldPos);
+                this.node.setPosition(localPos);
+            }
 
             tween(this.node as Node)
-                .to(0.15, { worldPosition: homePos }, { easing: 'quadOut' })
-                .call(() => {
-                    this.node.setParent(this.originalParent);
-                    
-                    this.node.setPosition(0, 0, 0); 
-                })
+                .to(0.2, { position: new Vec3(0, 0, 0) }, { easing: 'backOut' })
                 .start();
         }
     }
