@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, Animation } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
 
@@ -17,21 +17,15 @@ export class GameManager extends Component {
     @property(Node) nymeraShiver: Node = null!;
     @property(Node) nymeraHappy: Node = null!;
 
-    // --- Step 01: Backgrounds & Trash ---
+    // --- Step Properties ---
     @property(Node) bgWinter: Node = null!;
     @property(Node) bgSummer: Node = null!;
     @property(Node) medievalTrash: Node = null!;
     @property(Node) trashItemsParent: Node = null!; 
-
-    // --- Step 02: Windows ---
     @property(Node) brokenWindows: Node = null!;
     @property(Node) fixedWindows: Node = null!;
-
-    // --- Step 03: Tables ---
     @property(Node) brokenTables: Node = null!;
     @property(Node) fixedTables: Node = null!;
-
-    // --- Step 04: Fireplace ---
     @property(Node) brokenFireplace: Node = null!;
     @property(Node) fixedFireplace: Node = null!;
 
@@ -42,17 +36,30 @@ export class GameManager extends Component {
     onLoad() {
         if (this.gridContainer) this.gridContainer.active = false;
         
-        // Initial character state
-        if (this.allasseShiver) this.allasseShiver.active = true;
-        if (this.allasseHappy) this.allasseHappy.active = false;
-        if (this.nymeraShiver) this.nymeraShiver.active = true;
-        if (this.nymeraHappy) this.nymeraHappy.active = false;
+        // Start Game State: Shiver ON, Happy OFF
+        // this.toggleCharacterState(this.allasseShiver, true);
+        this.toggleCharacterState(this.allasseHappy, false);
+        // this.toggleCharacterState(this.nymeraShiver, true);
+        this.toggleCharacterState(this.nymeraHappy, false);
 
-        // Hide all fixed versions
+        // Hide fixed versions
         this.setNodeActive(this.bgSummer, false);
         this.setNodeActive(this.fixedWindows, false);
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
+    }
+
+    private toggleCharacterState(node: Node, active: boolean) {
+        if (!node) return;
+        node.active = active;
+        if (active) {
+            const anim = node.getComponent(Animation);
+            if (anim) {
+                if (anim.defaultClip) {
+                    anim.play(anim.defaultClip.name);
+                }
+            }
+        }
     }
 
     private setNodeActive(node: Node, active: boolean) {
@@ -130,7 +137,6 @@ export class GameManager extends Component {
                     .to(0.1, { scale: new Vec3(1, 1, 1), angle: 0 })
                     .call(() => {
                         if (scriptB.upgrade()) {
-                            // Wait 1 second after merging final step
                             this.scheduleOnce(() => {
                                 this.hideGridAndClearItems();
                                 this.completedSteps.add(scriptB.prefabIndex);
@@ -142,7 +148,7 @@ export class GameManager extends Component {
                                     this.executeTransition(scriptB.prefabIndex);
                                 }
                                 
-                                // Check if game is fully finished
+                                // WIN CONDITION: All steps done
                                 if (this.completedSteps.size === this.TOTAL_STEPS) {
                                     this.celebrateCompletion();
                                 }
@@ -158,12 +164,14 @@ export class GameManager extends Component {
 
     private celebrateCompletion() {
         this.scheduleOnce(() => {
-            // Stop shivering, start happy animations
-            if (this.allasseShiver) this.allasseShiver.active = false;
-            if (this.allasseHappy) this.allasseHappy.active = true;
-            if (this.nymeraShiver) this.nymeraShiver.active = false;
-            if (this.nymeraHappy) this.nymeraHappy.active = true;
-        }, 1.5); // Slight delay so it happens after the final fade
+            // STOP/HIDE shivering
+            this.toggleCharacterState(this.allasseShiver, false);
+            this.toggleCharacterState(this.nymeraShiver, false);
+            
+            // SHOW/START happy
+            this.toggleCharacterState(this.allasseHappy, true);
+            this.toggleCharacterState(this.nymeraHappy, true);
+        }, 1.5);
     }
 
     private triggerTrashCollection(finalMergeNode: Node) {
@@ -204,6 +212,7 @@ export class GameManager extends Component {
                 finishedCount++;
                 if (finishedCount === itemsToAnimate.length) {
                     this.executeTransition(0);
+                    // Vanish the collector
                     tween(this.medievalTrash).delay(0.5).to(0.4, { scale: Vec3.ZERO }).call(() => { this.medievalTrash.active = false; }).start();
                 }
             }).start();
