@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, Animation } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
+import { Spawner } from './Spawner';
 
 const { ccclass, property } = _decorator;
 
@@ -10,6 +11,8 @@ export class GameManager extends Component {
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
+
+    @property([Spawner]) spawnerComponents: Spawner[] = []; // Assign Spawners in Inspector
 
     // --- Character Animations ---
     @property(Node) allasseShiver: Node = null!;
@@ -31,39 +34,18 @@ export class GameManager extends Component {
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
+    public currentStepIndex: number = 0; // Starts with Trash (0), then Wood (1), etc.
     private readonly TOTAL_STEPS = 4;
 
     onLoad() {
         if (this.gridContainer) this.gridContainer.active = false;
-        
-        // Start Game State: Shiver ON, Happy OFF
-        // this.toggleCharacterState(this.allasseShiver, true);
         this.toggleCharacterState(this.allasseHappy, false);
-        // this.toggleCharacterState(this.nymeraShiver, true);
         this.toggleCharacterState(this.nymeraHappy, false);
 
-        // Hide fixed versions
         this.setNodeActive(this.bgSummer, false);
         this.setNodeActive(this.fixedWindows, false);
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
-    }
-
-    private toggleCharacterState(node: Node, active: boolean) {
-        if (!node) return;
-        node.active = active;
-        if (active) {
-            const anim = node.getComponent(Animation);
-            if (anim) {
-                if (anim.defaultClip) {
-                    anim.play(anim.defaultClip.name);
-                }
-            }
-        }
-    }
-
-    private setNodeActive(node: Node, active: boolean) {
-        if (node) node.active = active;
     }
 
     public spawnFromSpawner(prefabIndex: number) {
@@ -141,6 +123,11 @@ export class GameManager extends Component {
                                 this.hideGridAndClearItems();
                                 this.completedSteps.add(scriptB.prefabIndex);
                                 
+                                // Destroy the current spawner before moving to the next
+                                if (this.spawnerComponents[this.currentStepIndex]) {
+                                    this.spawnerComponents[this.currentStepIndex].selfDestruct();
+                                }
+
                                 if (scriptB.prefabIndex === 0) {
                                     this.triggerTrashCollection(targetOccupant);
                                 } else {
@@ -148,7 +135,9 @@ export class GameManager extends Component {
                                     this.executeTransition(scriptB.prefabIndex);
                                 }
                                 
-                                // WIN CONDITION: All steps done
+                                // Increment step index to activate next spawner
+                                this.currentStepIndex++;
+
                                 if (this.completedSteps.size === this.TOTAL_STEPS) {
                                     this.celebrateCompletion();
                                 }
@@ -162,13 +151,12 @@ export class GameManager extends Component {
         }
     }
 
+    // ... (rest of the helper methods: celebrateCompletion, triggerTrashCollection, executeTransition, etc. remain the same)
+    
     private celebrateCompletion() {
         this.scheduleOnce(() => {
-            // STOP/HIDE shivering
             this.toggleCharacterState(this.allasseShiver, false);
             this.toggleCharacterState(this.nymeraShiver, false);
-            
-            // SHOW/START happy
             this.toggleCharacterState(this.allasseHappy, true);
             this.toggleCharacterState(this.nymeraHappy, true);
         }, 1.5);
@@ -212,7 +200,6 @@ export class GameManager extends Component {
                 finishedCount++;
                 if (finishedCount === itemsToAnimate.length) {
                     this.executeTransition(0);
-                    // Vanish the collector
                     tween(this.medievalTrash).delay(0.5).to(0.4, { scale: Vec3.ZERO }).call(() => { this.medievalTrash.active = false; }).start();
                 }
             }).start();
@@ -233,7 +220,6 @@ export class GameManager extends Component {
         newNode.active = true;
         const oldSprite = oldNode.getComponent(Sprite);
         const newSprite = newNode.getComponent(Sprite);
-
         if (oldSprite) tween(oldSprite).to(1.5, { color: new Color(255, 255, 255, 0) }).start();
         if (newSprite) {
             newSprite.color = new Color(255, 255, 255, 0);
@@ -268,5 +254,18 @@ export class GameManager extends Component {
         const ps = p.getComponent(ParticleSystem2D);
         if (ps) ps.resetSystem();
         this.scheduleOnce(() => { if(p.isValid) p.destroy(); }, 2.0);
+    }
+
+    private toggleCharacterState(node: Node, active: boolean) {
+        if (!node) return;
+        node.active = active;
+        if (active) {
+            const anim = node.getComponent(Animation);
+            if (anim && anim.defaultClip) anim.play(anim.defaultClip.name);
+        }
+    }
+
+    private setNodeActive(node: Node, active: boolean) {
+        if (node) node.active = active;
     }
 }
