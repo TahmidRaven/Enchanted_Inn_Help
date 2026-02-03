@@ -11,16 +11,13 @@ export class GameManager extends Component {
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
+    @property([Spawner]) spawnerComponents: Spawner[] = [];
 
-    @property([Spawner]) spawnerComponents: Spawner[] = []; // Assign Spawners in Inspector
-
-    // --- Character Animations ---
     @property(Node) allasseShiver: Node = null!;
     @property(Node) allasseHappy: Node = null!;
     @property(Node) nymeraShiver: Node = null!;
     @property(Node) nymeraHappy: Node = null!;
 
-    // --- Step Properties ---
     @property(Node) bgWinter: Node = null!;
     @property(Node) bgSummer: Node = null!;
     @property(Node) medievalTrash: Node = null!;
@@ -34,21 +31,81 @@ export class GameManager extends Component {
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
-    public currentStepIndex: number = 0; // Starts with Trash (0), then Wood (1), etc.
+    public currentStepIndex: number = 0; 
     private readonly TOTAL_STEPS = 4;
+
+    // --- Hint System Properties ---
+    private hintTimer: number = 0;
+    private readonly HINT_DELAY: number = 3.0; // 3 seconds of inactivity
+    private activeHintNodes: Node[] = [];
 
     onLoad() {
         if (this.gridContainer) this.gridContainer.active = false;
         this.toggleCharacterState(this.allasseHappy, false);
         this.toggleCharacterState(this.nymeraHappy, false);
-
         this.setNodeActive(this.bgSummer, false);
         this.setNodeActive(this.fixedWindows, false);
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
     }
 
+    update(dt: number) {
+        // Increment timer if grid is active and no hint is playing
+        if (this.gridContainer && this.gridContainer.active && this.activeHintNodes.length === 0) {
+            this.hintTimer += dt;
+            if (this.hintTimer >= this.HINT_DELAY) {
+                this.findAndShowHint();
+            }
+        }
+    }
+
+    public clearHints() {
+        this.activeHintNodes.forEach(node => {
+            if (node && node.isValid) {
+                node.getComponent(MergeItem)?.stopHint();
+            }
+        });
+        this.activeHintNodes = [];
+        this.hintTimer = 0;
+    }
+
+    private findAndShowHint() {
+        this.clearHints();
+
+        // Search for matching pairs in the occupancy grid
+        for (let i = 0; i < this.occupancy.length; i++) {
+            const nodeA = this.occupancy[i];
+            if (!nodeA) continue;
+            const scriptA = nodeA.getComponent(MergeItem)!;
+
+            for (let j = i + 1; j < this.occupancy.length; j++) {
+                const nodeB = this.occupancy[j];
+                if (!nodeB) continue;
+                const scriptB = nodeB.getComponent(MergeItem)!;
+
+                // Match found: Same level and same item type
+                if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
+                    this.applyHintEffect(nodeA, nodeB);
+                    return; // Show only one pair at a time
+                }
+            }
+        }
+    }
+
+    private applyHintEffect(nodeA: Node, nodeB: Node) {
+        const posA = nodeA.worldPosition;
+        const posB = nodeB.worldPosition;
+        
+        // Midpoint calculation handles horizontal, vertical, and diagonal
+        const mid = new Vec3((posA.x + posB.x) / 2, (posA.y + posB.y) / 2, 0);
+
+        nodeA.getComponent(MergeItem)?.playHint(mid);
+        nodeB.getComponent(MergeItem)?.playHint(mid);
+        this.activeHintNodes = [nodeA, nodeB];
+    }
+
     public spawnFromSpawner(prefabIndex: number) {
+        this.clearHints();
         if (this.gridContainer) this.gridContainer.active = true;
         const coreLevels = [0, 0, 1, 2];
         coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
@@ -98,6 +155,7 @@ export class GameManager extends Component {
     }
 
     handleMove(draggedNode: Node, targetIdx: number) {
+        this.clearHints();
         const scriptA = draggedNode.getComponent(MergeItem)!;
         const oldIdx = scriptA.currentSlotIndex;
         const targetOccupant = this.occupancy[targetIdx];
@@ -110,7 +168,7 @@ export class GameManager extends Component {
             scriptA.currentSlotIndex = targetIdx;
         } else if (targetOccupant !== draggedNode) {
             const scriptB = targetOccupant.getComponent(MergeItem)!;
-            if (scriptA.level === scriptB.level) {
+            if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
                 this.occupancy[oldIdx] = null;
                 this.playMergeParticle(targetOccupant.worldPosition);
 
@@ -122,8 +180,6 @@ export class GameManager extends Component {
                             this.scheduleOnce(() => {
                                 this.hideGridAndClearItems();
                                 this.completedSteps.add(scriptB.prefabIndex);
-                                
-                                // Destroy the current spawner before moving to the next
                                 if (this.spawnerComponents[this.currentStepIndex]) {
                                     this.spawnerComponents[this.currentStepIndex].selfDestruct();
                                 }
@@ -134,13 +190,8 @@ export class GameManager extends Component {
                                     if(targetOccupant.isValid) targetOccupant.destroy();
                                     this.executeTransition(scriptB.prefabIndex);
                                 }
-                                
-                                // Increment step index to activate next spawner
                                 this.currentStepIndex++;
-
-                                if (this.completedSteps.size === this.TOTAL_STEPS) {
-                                    this.celebrateCompletion();
-                                }
+                                if (this.completedSteps.size === this.TOTAL_STEPS) this.celebrateCompletion();
                             }, 1.0);
                         }
                     }).start();
@@ -151,8 +202,6 @@ export class GameManager extends Component {
         }
     }
 
-    // ... (rest of the helper methods: celebrateCompletion, triggerTrashCollection, executeTransition, etc. remain the same)
-    
     private celebrateCompletion() {
         this.scheduleOnce(() => {
             this.toggleCharacterState(this.allasseShiver, false);
@@ -236,6 +285,7 @@ export class GameManager extends Component {
         if (this.gridContainer) this.gridContainer.active = false;
         this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
         this.occupancy.fill(null);
+        this.clearHints();
     }
 
     private getBezierPoint(p0: Vec3, p1: Vec3, p2: Vec3, t: number): Vec3 {

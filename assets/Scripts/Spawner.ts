@@ -10,6 +10,7 @@ export class Spawner extends Component {
     @property({ type: CCInteger }) 
     prefabIndex: number = 0; 
 
+    // Explicitly define the generic as Cocos Node to avoid DOM Node conflicts
     private breathingTween: Tween<Node> | null = null;
 
     onLoad() {
@@ -17,7 +18,6 @@ export class Spawner extends Component {
     }
 
     update() {
-        // Only breathe if this is the current active step in the GameManager
         if (this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
             if (!this.breathingTween) {
                 this.playBreathingAnimation();
@@ -28,7 +28,8 @@ export class Spawner extends Component {
     }
 
     private playBreathingAnimation() {
-        this.breathingTween = tween(this.node)
+        // We cast the target to ensure the Tween matches Tween<Node>
+        this.breathingTween = tween(this.node as Node)
             .to(0.8, { scale: new Vec3(1.1, 1.1, 1.1) }, { easing: 'sineInOut' })
             .to(0.8, { scale: new Vec3(1.0, 1.0, 1.0) }, { easing: 'sineInOut' })
             .union()
@@ -52,7 +53,7 @@ export class Spawner extends Component {
 
     public selfDestruct() {
         this.stopBreathing();
-        tween(this.node)
+        tween(this.node as Node)
             .to(0.3, { scale: Vec3.ZERO }, { easing: 'backIn' })
             .call(() => {
                 this.node.destroy();
