@@ -12,7 +12,6 @@ export class GameManager extends Component {
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
 
-    // FIX: Use arrow function for the array type as well
     @property({ type: [() => Spawner] }) spawnerComponents: Spawner[] = [];
 
     @property(Node) allasseShiver: Node = null!;
@@ -31,6 +30,9 @@ export class GameManager extends Component {
     @property(Node) brokenFireplace: Node = null!;
     @property(Node) fixedFireplace: Node = null!;
 
+    // NEW: Reference to the snow particle node
+    @property(Node) snowNode: Node = null!; 
+
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
     public currentStepIndex: number = 0; 
@@ -48,6 +50,9 @@ export class GameManager extends Component {
         this.setNodeActive(this.fixedWindows, false);
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
+        
+        // Ensure snow is active at the start
+        if (this.snowNode) this.snowNode.active = true;
     }
 
     update(dt: number) {
@@ -248,10 +253,31 @@ export class GameManager extends Component {
 
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
-            case 0: this.fadeNodes(this.bgWinter, this.bgSummer); break;
-            case 1: this.fadeNodes(this.brokenWindows, this.fixedWindows); break;
-            case 2: this.fadeNodes(this.brokenTables, this.fixedTables); break;
-            case 3: this.fadeNodes(this.brokenFireplace, this.fixedFireplace); break;
+            case 0: 
+                this.fadeNodes(this.bgWinter, this.bgSummer); 
+                break;
+            case 1: 
+                this.fadeNodes(this.brokenWindows, this.fixedWindows); 
+                this.stopSnowEffect(); // UPDATED: Stop snow when window is fixed
+                break;
+            case 2: 
+                this.fadeNodes(this.brokenTables, this.fixedTables); 
+                break;
+            case 3: 
+                this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
+                break;
+        }
+    }
+
+    // NEW: Helper to stop particles
+    private stopSnowEffect() {
+        if (this.snowNode) {
+            const ps = this.snowNode.getComponent(ParticleSystem2D);
+            if (ps) {
+                ps.stopSystem(); // Stop emission so existing flakes finish falling
+            } else {
+                this.snowNode.active = false;
+            }
         }
     }
 
