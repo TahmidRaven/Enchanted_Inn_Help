@@ -29,6 +29,7 @@ export class MergeItem extends Component {
         this.stopHint();
         
         // Calculate direction and move 20 units toward midpoint
+        
         const dir = midpoint.clone().subtract(this.node.worldPosition).normalize();
         const hintPos = new Vec3(dir.x * 20, dir.y * 20, 0);
 
