@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, Animation } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
+import { VictoryScreen } from './VictoryScreen'; // Added Import
 
 const { ccclass, property } = _decorator;
 
@@ -13,6 +14,9 @@ export class GameManager extends Component {
 
     @property({ type: [Component] }) 
     spawnerComponents: Component[] = [];
+
+    // Added VictoryScreen property
+    @property(VictoryScreen) victoryScreen: VictoryScreen = null!;
 
     public currentStepIndex: number = 0;
 
@@ -102,11 +106,9 @@ export class GameManager extends Component {
         this.clearHints();
         if (this.gridContainer) this.gridContainer.active = true;
 
-        // 1. Target Chain: lvl0, lvl0, lvl1, lvl2
         const coreLevels = [0, 0, 1, 2];
         coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
 
-        // 2. Junk Items: 6 random lvl0/lvl1 items from other prefabs
         for (let i = 0; i < 3; i++) {
             let junkPrefabIdx = Math.floor(Math.random() * this.stagePrefabs.length);
             if (junkPrefabIdx === prefabIndex) {
@@ -215,10 +217,18 @@ export class GameManager extends Component {
 
     private celebrateCompletion() {
         this.scheduleOnce(() => {
+            // Swap character visuals
             this.toggleCharacterState(this.allasseShiver, false);
             this.toggleCharacterState(this.nymeraShiver, false);
             this.toggleCharacterState(this.allasseHappy, true);
             this.toggleCharacterState(this.nymeraHappy, true);
+
+            // Show Victory Screen after a small delay for the characters to react
+            if (this.victoryScreen) {
+                this.scheduleOnce(() => {
+                    this.victoryScreen.show();
+                }, 0.8);
+            }
         }, 1.5);
     }
 
