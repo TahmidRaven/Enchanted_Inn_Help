@@ -108,11 +108,11 @@ export class GameManager extends Component {
                 if (scriptB.upgrade()) {
                     this.scheduleOnce(() => {
                         this.hideGridAndClearItems(); 
-                        this.completedSteps.add(scriptB.prefabIndex);
                         
                         if (scriptB.prefabIndex === 0) {
                             this.triggerTrashCollection(targetOccupant);
                         } else {
+                            this.completedSteps.add(scriptB.prefabIndex);
                             if(targetOccupant.isValid) targetOccupant.destroy();
                             this.executeTransition(scriptB.prefabIndex);
                             this.currentStepIndex++;
@@ -135,10 +135,11 @@ export class GameManager extends Component {
         }
 
         if (this.trashAnim) {
-            // Wait for the full animation sequence to finish before incrementing state
+            // Sequence updated to unlock the next spawner ONLY after animation
             this.trashAnim.playCleanup(items, () => {
+                this.completedSteps.add(0);
                 this.executeTransition(0); 
-                this.currentStepIndex++; 
+                this.currentStepIndex = 1; // Explicitly set to next stage
                 this.checkCelebration();
             });
         }
@@ -156,7 +157,9 @@ export class GameManager extends Component {
 
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
-            case 0: this.fadeInNode(this.fixedFloor); break;
+            case 0: 
+                this.fadeInNode(this.fixedFloor); // Fixed floor appears over bgWinter
+                break;
             case 1: 
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect(); 
@@ -165,7 +168,9 @@ export class GameManager extends Component {
                     this.animateChildrenSequentially(this.fixedTables, true);
                 }, 0.6);
                 break;
-            case 2: this.fadeNodes(this.brokenFireplace, this.fixedFireplace); break;
+            case 2: 
+                this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
+                break;
         }
     }
 

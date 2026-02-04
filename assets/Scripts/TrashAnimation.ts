@@ -11,11 +11,7 @@ export class TrashAnimation extends Component {
 
     onLoad() {
         this.sprite = this.getComponent(Sprite)!;
-        
-        // This fixes your scale issue. It saves the 0.7 (or whatever you set)
-        // so that when the bin "pops in", it returns to this exact size.
         this.originalScale = this.node.scale.clone();
-        
         this.node.active = false;
         this.node.setScale(Vec3.ZERO);
     }
@@ -23,12 +19,10 @@ export class TrashAnimation extends Component {
     public playCleanup(items: Node[], onComplete: Function) {
         this.node.active = true;
         
-        // Ensure we start with the empty state
         if (this.emptyBinSprite) {
             this.sprite.spriteFrame = this.emptyBinSprite;
         }
         
-        // Pop up to the original editor scale
         tween(this.node)
             .to(0.5, { scale: this.originalScale }, { easing: 'backOut' })
             .call(() => {
@@ -42,18 +36,22 @@ export class TrashAnimation extends Component {
         const targetPos = this.node.worldPosition;
 
         items.forEach((item, idx) => {
-            if (!item || !item.isValid) return;
+            if (!item || !item.isValid) {
+                finishedCount++;
+                if (finishedCount === items.length) this.finalize(onComplete);
+                return;
+            }
 
             const startPos = item.worldPosition.clone();
             const controlPoint = new Vec3(
                 (startPos.x + targetPos.x) / 2, 
-                Math.max(startPos.y, targetPos.y) + 400, // Arc height
+                Math.max(startPos.y, targetPos.y) + 400, 
                 0
             );
 
             let obj = { t: 0 };
             tween(obj)
-                .delay(idx * 0.15) // Sequential timing
+                .delay(idx * 0.15)
                 .to(0.6, { t: 1 }, {
                     easing: 'quadIn',
                     onUpdate: () => {
@@ -65,10 +63,9 @@ export class TrashAnimation extends Component {
                 })
                 .call(() => {
                     item.active = false;
-                    this.shakeBin(5); // Small shake per item hit
+                    this.shakeBin(5);
                     finishedCount++;
 
-                    // ONLY when the very last item is finished
                     if (finishedCount === items.length) {
                         this.finalize(onComplete);
                     }
@@ -78,20 +75,17 @@ export class TrashAnimation extends Component {
     }
 
     private finalize(onComplete: Function) {
-        // 1. Change to full sprite
         if (this.fullBinSprite) {
             this.sprite.spriteFrame = this.fullBinSprite;
         }
 
-        // 2. Shake and wait a moment so the player sees the "Full" bin
         tween(this.node)
-            .call(() => this.shakeBin(15)) // Bigger shake for "Full"
+            .call(() => this.shakeBin(15))
             .delay(0.8) 
             .to(0.5, { scale: Vec3.ZERO }, { easing: 'backIn' })
             .call(() => {
                 this.node.active = false;
-                // 3. Now trigger the callback to let GameManager proceed
-                onComplete(); 
+                if (onComplete) onComplete(); // Triggers progression in GameManager
             })
             .start();
     }
