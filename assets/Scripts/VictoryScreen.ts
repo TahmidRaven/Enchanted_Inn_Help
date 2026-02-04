@@ -8,8 +8,8 @@ export class VictoryScreen extends Component {
     private opacityComp: UIOpacity = null!;
     
 
-    private readonly TARGET_SCALE = new Vec3(1.2, 1.2, 1);
-    private readonly POP_SCALE = new Vec3(1.3, 1.3, 1);
+    private readonly TARGET_SCALE = new Vec3(1.25, 1.25, 1);
+    private readonly POP_SCALE = new Vec3(1.35, 1.35, 1);
 
     onLoad() {
         this.opacityComp = this.node.getComponent(UIOpacity)!;
@@ -27,7 +27,7 @@ export class VictoryScreen extends Component {
             this.node.setSiblingIndex(lastIndex);
         }
 
-        this.node.setPosition(0, 49.532, 0); 
+        this.node.setPosition(0, 0, 0); 
         this.node.setScale(0.5, 0.5, 1); 
         
         if (this.opacityComp) {
