@@ -118,7 +118,7 @@ export class GameManager extends Component {
                             this.currentStepIndex++;
                             this.checkCelebration();
                         }
-                    }, 0.5); 
+                    }, 1.5); 
                 }
                 draggedNode.destroy();
                 return true; 
