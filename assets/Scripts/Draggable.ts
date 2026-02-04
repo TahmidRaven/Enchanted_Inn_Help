@@ -10,7 +10,6 @@ export class Draggable extends Component {
     private homePosition: Vec3 = new Vec3(0, 0, 0);
     private homeScale: Vec3 = new Vec3(1, 1, 1);
     
-    // Drag threshold variables - Fixing the tap issue
     private isDragging: boolean = false;
     private startTouchPos: Vec3 = new Vec3();
     private readonly DRAG_THRESHOLD: number = 15; 
@@ -45,7 +44,7 @@ export class Draggable extends Component {
             this.node.setParent(this.topLayerNode);
             this.node.setWorldPosition(worldPos);
             
-            // Subtle "Pick up" pop
+          
             tween(this.node as Node)
                 .to(0.1, { scale: new Vec3(1.15, 1.15, 1.15) }, { easing: 'sineOut' })
                 .start();
@@ -56,7 +55,7 @@ export class Draggable extends Component {
         const touchPos = event.getUILocation();
         const currentPos = new Vec3(touchPos.x, touchPos.y, 0);
 
-        // Only start drag logic if moved past threshold
+    
         if (!this.isDragging && Vec3.distance(this.startTouchPos, currentPos) > this.DRAG_THRESHOLD) {
             this.isDragging = true;
             this.prepareDrag();
@@ -68,8 +67,7 @@ export class Draggable extends Component {
     }
 
     onTouchEnd(event: EventTouch) {
-        // IMPORTANT: If we never started dragging, ignore the end logic entirely.
-        // This prevents the item from "jumping" to the top layer's (0,0,0) on a tap.
+        // If we never started dragging, ignore 
         if (!this.isDragging) return;
 
         const touchPos = event.getUILocation();
@@ -93,18 +91,14 @@ export class Draggable extends Component {
         if (this.originalParent && this.originalParent.isValid) {
             tween(this.node as Node).stop();
 
-            // Calculate the slot's world position so we can fly back to it
             const targetWorldPos = this.originalParent.worldPosition.clone();
 
             tween(this.node as Node)
-                // 1. Fly from current finger position back to slot center
                 .to(0.25, { 
                     worldPosition: targetWorldPos, 
                     scale: new Vec3(0.9, 1.1, 1) // Stretch during flight
                 }, { easing: 'backOut' })
-                // 2. Squash on impact
                 .to(0.1, { scale: new Vec3(1.1, 0.9, 1) }, { easing: 'quadOut' })
-                // 3. Settle and snap parent back
                 .to(0.1, { scale: this.homeScale }, { easing: 'sineInOut' })
                 .call(() => {
                     this.node.setParent(this.originalParent);
