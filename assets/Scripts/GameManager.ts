@@ -101,13 +101,19 @@ export class GameManager extends Component {
     public spawnFromSpawner(prefabIndex: number) {
         this.clearHints();
         if (this.gridContainer) this.gridContainer.active = true;
+
+        // 1. Target Chain: lvl0, lvl0, lvl1, lvl2
         const coreLevels = [0, 0, 1, 2];
         coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
 
-        for (let i = 0; i < 2; i++) {
-            let junkIdx = Math.floor(Math.random() * this.stagePrefabs.length);
-            if (junkIdx === prefabIndex) junkIdx = (junkIdx + 1) % this.stagePrefabs.length;
-            this.spawnItem(Math.random() > 0.5 ? 0 : 1, junkIdx);
+        // 2. Junk Items: 6 random lvl0/lvl1 items from other prefabs
+        for (let i = 0; i < 3; i++) {
+            let junkPrefabIdx = Math.floor(Math.random() * this.stagePrefabs.length);
+            if (junkPrefabIdx === prefabIndex) {
+                junkPrefabIdx = (junkPrefabIdx + 1) % this.stagePrefabs.length;
+            }
+            const junkLevel = Math.random() > 0.5 ? 1 : 0;
+            this.spawnItem(junkLevel, junkPrefabIdx);
         }
     }
 
@@ -137,7 +143,7 @@ export class GameManager extends Component {
 
     public getNearestSlot(worldPos: Vec3): number {
         let nearestIdx = -1;
-        let minDist = 100; // Snap distance
+        let minDist = 100;
         this.slots.forEach((slot, idx) => {
             const dist = Vec3.distance(worldPos, slot.worldPosition);
             if (dist < minDist) {
@@ -150,24 +156,22 @@ export class GameManager extends Component {
 
     public handleMove(draggedNode: Node, targetIdx: number): boolean {
         this.clearHints();
-        
-        if (targetIdx === -1) return false;
+        if (targetIdx === -1 || !draggedNode.isValid) return false;
 
         const scriptA = draggedNode.getComponent(MergeItem)!;
         const oldIdx = scriptA.currentSlotIndex;
         const targetOccupant = this.occupancy[targetIdx];
 
-        // NO SWAPPING/EMPTY MOVING: Only allow if there's a different occupant to merge with
-        if (targetOccupant && targetOccupant !== draggedNode) {
+        if (targetOccupant && targetOccupant.isValid && targetOccupant !== draggedNode) {
             const scriptB = targetOccupant.getComponent(MergeItem)!;
-            
             if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
                 this.occupancy[oldIdx] = null;
                 this.playMergeParticle(targetOccupant.worldPosition);
+                tween(targetOccupant).stop(); 
 
                 tween(targetOccupant)
-                    .to(0.2, { scale: new Vec3(1.4, 1.4, 1.4), angle: 360 })
-                    .to(0.1, { scale: new Vec3(1, 1, 1), angle: 0 })
+                    .to(0.15, { scale: new Vec3(1.4, 1.4, 1.4), angle: 360 }, { easing: 'sineOut' })
+                    .to(0.1, { scale: new Vec3(1, 1, 1), angle: 0 }, { easing: 'sineIn' })
                     .call(() => {
                         if (scriptB.upgrade()) {
                             this.scheduleOnce(() => {
@@ -190,22 +194,25 @@ export class GameManager extends Component {
                                     if(targetOccupant.isValid) targetOccupant.destroy();
                                     this.executeTransition(scriptB.prefabIndex);
                                 }
-                                
                                 this.currentStepIndex++;
                                 if (this.completedSteps.size === this.TOTAL_STEPS) this.celebrateCompletion();
-                            }, 1.0);
+                            }, 0.5); 
                         }
                     }).start();
-                
                 draggedNode.destroy();
                 return true; 
             }
         }
-
         return false; 
     }
 
-    // ... (rest of helper functions like celebrateCompletion, executeTransition, etc. remain the same)
+    private hideGridAndClearItems() {
+        if (this.gridContainer) this.gridContainer.active = false;
+        this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
+        this.occupancy.fill(null);
+        this.clearHints();
+    }
+
     private celebrateCompletion() {
         this.scheduleOnce(() => {
             this.toggleCharacterState(this.allasseShiver, false);
@@ -261,30 +268,20 @@ export class GameManager extends Component {
 
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
-            case 0: 
-                this.fadeNodes(this.bgWinter, this.bgSummer); 
-                break;
+            case 0: this.fadeNodes(this.bgWinter, this.bgSummer); break;
             case 1: 
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect(); 
-                this.scheduleOnce(() => {
-                    this.fadeNodes(this.brokenTables, this.fixedTables); 
-                }, 0.6);
+                this.scheduleOnce(() => { this.fadeNodes(this.brokenTables, this.fixedTables); }, 0.6);
                 break;
-            case 2: 
-                this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
-                break;
+            case 2: this.fadeNodes(this.brokenFireplace, this.fixedFireplace); break;
         }
     }
 
     private stopSnowEffect() {
         if (this.snowNode) {
             const ps = this.snowNode.getComponent(ParticleSystem2D);
-            if (ps) {
-                ps.stopSystem(); 
-            } else {
-                this.snowNode.active = false;
-            }
+            if (ps) ps.stopSystem(); else this.snowNode.active = false;
         }
     }
 
@@ -303,13 +300,6 @@ export class GameManager extends Component {
     private shakeTrash() {
         if (!this.medievalTrash) return;
         tween(this.medievalTrash).by(0.05, { position: new Vec3(5, 0, 0) }).by(0.05, { position: new Vec3(-10, 0, 0) }).by(0.05, { position: new Vec3(5, 0, 0) }).start();
-    }
-
-    private hideGridAndClearItems() {
-        if (this.gridContainer) this.gridContainer.active = false;
-        this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
-        this.occupancy.fill(null);
-        this.clearHints();
     }
 
     private getBezierPoint(p0: Vec3, p1: Vec3, p2: Vec3, t: number): Vec3 {

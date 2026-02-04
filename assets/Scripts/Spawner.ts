@@ -1,11 +1,10 @@
-import { _decorator, Component, Node, CCInteger, Vec3, tween, Tween } from 'cc';
+import { _decorator, Component, Node, CCInteger, Vec3, tween, Tween, Sprite, Color } from 'cc';
 import { GameManager } from './GameManager'; 
 
 const { ccclass, property } = _decorator;
 
 @ccclass('Spawner')
 export class Spawner extends Component {
-    // We use a Node property to break the circular dependency loop in the Inspector
     @property(Node)
     gameManagerNode: Node = null!;
 
@@ -15,21 +14,19 @@ export class Spawner extends Component {
     prefabIndex: number = 0; 
 
     private breathingTween: Tween<Node> | null = null;
+    private isUsed: boolean = false; 
 
     onLoad() {
-        // Find the GameManager component on the assigned Node
         if (this.gameManagerNode) {
             this.gameManager = this.gameManagerNode.getComponent(GameManager)!;
-        } else {
-            console.error("Spawner: gameManagerNode is not assigned in the Inspector!");
         }
         
         this.node.on(Node.EventType.TOUCH_END, this.onSpawnerClicked, this);
     }
 
     update() {
-        // Only play animation if this is the active spawner for the current step
-        if (this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
+        // Only play animation if this is the active spawner and hasn't been used
+        if (!this.isUsed && this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
             if (!this.breathingTween) {
                 this.playBreathingAnimation();
             }
@@ -51,13 +48,23 @@ export class Spawner extends Component {
         if (this.breathingTween) {
             this.breathingTween.stop();
             this.breathingTween = null;
-            this.node.setScale(new Vec3(1, 1, 1));
+            if (this.node.isValid) this.node.setScale(new Vec3(1, 1, 1));
         }
     }
 
     onSpawnerClicked() {
-        if (this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
+        // Restriction: Trigger spawn only once
+        if (!this.isUsed && this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
+            this.isUsed = true; 
+            this.stopBreathing();
             this.gameManager.spawnFromSpawner(this.prefabIndex);
+            
+            // Visual feedback: Dim the spawner
+            const sprite = this.node.getComponent(Sprite);
+            if (sprite) {
+                // Corrected: Using Color class instead of 'any'
+                tween(sprite).to(0.3, { color: new Color(150, 150, 150, 255) }).start();
+            }
         }
     }
 

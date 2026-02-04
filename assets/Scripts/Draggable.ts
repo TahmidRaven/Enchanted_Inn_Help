@@ -25,6 +25,7 @@ export class Draggable extends Component {
     }
 
     onTouchStart(event: EventTouch) {
+        if (!this.node.isValid) return;
         if (this.gm) this.gm.clearHints();
         
         const loc = event.getUILocation();
@@ -33,7 +34,7 @@ export class Draggable extends Component {
     }
 
     private prepareDrag() {
-        if (!this.node.parent || this.node.parent === this.topLayerNode) return;
+        if (!this.node.isValid || !this.node.parent || this.node.parent === this.topLayerNode) return;
 
         this.originalParent = this.node.parent!;
         this.homePosition = this.node.position.clone(); 
@@ -42,6 +43,7 @@ export class Draggable extends Component {
         const worldPos = this.node.worldPosition.clone();
 
         if (this.topLayerNode) {
+            tween(this.node).stop(); 
             this.node.setParent(this.topLayerNode);
             this.node.setWorldPosition(worldPos);
             
@@ -52,6 +54,7 @@ export class Draggable extends Component {
     }
 
     onTouchMove(event: EventTouch) {
+        if (!this.node.isValid) return;
         const touchPos = event.getUILocation();
         const currentPos = new Vec3(touchPos.x, touchPos.y, 0);
 
@@ -75,12 +78,12 @@ export class Draggable extends Component {
         const worldTouch = new Vec3(touchPos.x, touchPos.y, 0);
         
         let mergeHappened = false;
-        if (this.gm) {
+        if (this.gm && this.node.isValid) {
             const nearestIdx = this.gm.getNearestSlot(worldTouch);
             mergeHappened = this.gm.handleMove(this.node, nearestIdx);
         }
 
-        if (!mergeHappened) {
+        if (!mergeHappened && this.node.isValid) {
             this.returnToHome();
         }
 
@@ -88,23 +91,24 @@ export class Draggable extends Component {
     }
 
     onTouchCancel(event: EventTouch) {
-        this.returnToHome();
+        if (this.node.isValid) {
+            this.returnToHome();
+        }
         this.isDragging = false;
     }
 
-    /**
-     * Safety method to ensure node isn't stuck in TopLayer after rapid taps
-     */
     private forceCleanUp() {
-        if (this.node.parent === this.topLayerNode && this.originalParent) {
+        if (this.node.isValid && this.node.parent === this.topLayerNode && this.originalParent) {
             this.node.setParent(this.originalParent);
-            this.node.setPosition(new Vec3(0, 0, 0));
+            this.node.setPosition(Vec3.ZERO);
         }
     }
 
     public returnToHome() {
+        if (!this.node.isValid) return;
+
         if (this.originalParent && this.originalParent.isValid) {
-            tween(this.node as Node).stop();
+            tween(this.node).stop();
             const targetWorldPos = this.originalParent.worldPosition.clone();
 
             tween(this.node as Node)
@@ -116,11 +120,10 @@ export class Draggable extends Component {
                 .call(() => {
                     if (!this.node.isValid) return;
                     this.node.setParent(this.originalParent);
-                    this.node.setPosition(new Vec3(0, 0, 0)); 
+                    this.node.setPosition(Vec3.ZERO); 
                 })
                 .start();
         } else if (this.node.parent === this.topLayerNode) {
-            // Fallback if parent is lost
             this.node.destroy();
         }
     }
