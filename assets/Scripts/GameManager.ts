@@ -9,8 +9,8 @@ const { ccclass, property } = _decorator;
 export class GameManager extends Component {
     @property([Prefab]) stagePrefabs: Prefab[] = []; 
     @property([Node]) slots: Node[] = []; 
-    @property(Node) gridContainer: Node = null!; // The logic node containing slot positions
-    @property(Node) gridVisualImage: Node = null!; // The actual wooden grid image
+    @property(Node) gridContainer: Node = null!; 
+    @property(Node) gridVisualImage: Node = null!; 
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
     @property({ type: [Component] }) spawnerComponents: Component[] = [];
     @property(VictoryScreen) victoryScreen: VictoryScreen = null!;
@@ -25,7 +25,7 @@ export class GameManager extends Component {
     @property(Node) nymeraHappy: Node = null!;
 
     @property(Node) bgWinter: Node = null!;
-    @property(Node) bgSummer: Node = null!;
+    @property(Node) fixedFloor: Node = null!; 
     @property(Node) medievalTrash: Node = null!;
     @property(Node) trashItemsParent: Node = null!; 
     @property(Node) brokenWindows: Node = null!;
@@ -44,12 +44,12 @@ export class GameManager extends Component {
     private activeHintNodes: Node[] = [];
 
     onLoad() {
-
         this.setGridVisibility(false);
-        
         this.toggleCharacterState(this.allasseHappy, false);
         this.toggleCharacterState(this.nymeraHappy, false);
-        this.setNodeActive(this.bgSummer, false);
+        
+        if (this.bgWinter) this.bgWinter.active = true;
+        this.setNodeActive(this.fixedFloor, false);
         this.setNodeActive(this.fixedWindows, false);
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
@@ -62,13 +62,11 @@ export class GameManager extends Component {
     }
 
     private onStartGame() {
-        console.log("Game started! Spawners are now allowed to animate.");
         this.gameStarted = true; 
         this.setGridVisibility(false);
     }
 
     private onFastForwardToVictory() {
-        console.log("Player chose to leave. Showing victory screen.");
         this.setGridVisibility(false);
         if (this.victoryScreen) {
             this.victoryScreen.show();
@@ -128,7 +126,6 @@ export class GameManager extends Component {
 
     public spawnFromSpawner(prefabIndex: number) {
         this.clearHints();
-        // Activate grid only when the player actually starts a merge task
         this.setGridVisibility(true); 
 
         const coreLevels = [0, 0, 1, 2];
@@ -277,37 +274,75 @@ export class GameManager extends Component {
         let finishedCount = 0;
         itemsToAnimate.forEach((item, idx) => {
             const startPos = item.worldPosition.clone();
-            const controlPoint = new Vec3((startPos.x + targetPos.x) / 2, Math.max(startPos.y, targetPos.y) + 400, 0);
+            // Control point shifted up to create a "drop" arc
+            const controlPoint = new Vec3((startPos.x + targetPos.x) / 2, Math.max(startPos.y, targetPos.y) + 300, 0); 
             let obj = { t: 0 };
-            tween(obj).delay(idx * 0.15).to(0.7, { t: 1 }, {
-                easing: 'quadIn',
-                onUpdate: () => {
-                    if (!item.isValid) return;
-                    item.setWorldPosition(this.getBezierPoint(startPos, controlPoint, targetPos, obj.t));
-                    item.angle += 20;
-                    item.setScale(new Vec3(1 - obj.t, 1 - obj.t, 1 - obj.t));
-                }
-            }).call(() => {
-                item.active = false;
-                this.shakeTrash(); 
-                finishedCount++;
-                if (finishedCount === itemsToAnimate.length) {
-                    this.executeTransition(0);
-                    tween(this.medievalTrash).delay(0.5).to(0.4, { scale: Vec3.ZERO }).call(() => { this.medievalTrash.active = false; }).start();
-                }
-            }).start();
+            
+            tween(obj)
+                .delay(idx * 0.15) // Sequential delay
+                .to(0.6, { t: 1 }, {
+                    easing: 'quadIn',
+                    onUpdate: () => {
+                        if (!item.isValid) return;
+                        item.setWorldPosition(this.getBezierPoint(startPos, controlPoint, targetPos, obj.t)); // Bezier logic restored
+                        item.setScale(new Vec3(1 - obj.t, 1 - obj.t, 1 - obj.t)); // Shrink as it falls
+                    }
+                })
+                .call(() => {
+                    item.active = false;
+                    this.shakeTrash(); 
+                    finishedCount++;
+                    if (finishedCount === itemsToAnimate.length) {
+                        this.executeTransition(0);
+                        tween(this.medievalTrash).delay(0.5).to(0.4, { scale: Vec3.ZERO }).call(() => { this.medievalTrash.active = false; }).start();
+                    }
+                })
+                .start();
         });
     }
 
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
-            case 0: this.fadeNodes(this.bgWinter, this.bgSummer); break;
+            case 0: 
+                this.fadeInNode(this.fixedFloor); 
+                break;
             case 1: 
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect(); 
-                this.scheduleOnce(() => { this.fadeNodes(this.brokenTables, this.fixedTables); }, 0.6);
+                this.scheduleOnce(() => { 
+                    this.animateChildrenSequentially(this.brokenTables, false); 
+                    this.animateChildrenSequentially(this.fixedTables, true);
+                }, 0.6);
                 break;
-            case 2: this.fadeNodes(this.brokenFireplace, this.fixedFireplace); break;
+            case 2: 
+                this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
+                break;
+        }
+    }
+
+    private animateChildrenSequentially(parent: Node, fadeIn: boolean) {
+        if (!parent) return;
+        parent.active = true;
+        const children = parent.children;
+        children.forEach((child, idx) => {
+            const sprite = child.getComponent(Sprite);
+            if (sprite) {
+                sprite.color = new Color(255, 255, 255, fadeIn ? 0 : 255);
+                tween(sprite)
+                    .delay(idx * 0.3) 
+                    .to(1.0, { color: new Color(255, 255, 255, fadeIn ? 255 : 0) })
+                    .start();
+            }
+        });
+    }
+
+    private fadeInNode(node: Node) {
+        if (!node) return;
+        node.active = true;
+        const sprite = node.getComponent(Sprite);
+        if (sprite) {
+            sprite.color = new Color(255, 255, 255, 0);
+            tween(sprite).to(1.5, { color: new Color(255, 255, 255, 255) }).start();
         }
     }
 
