@@ -12,12 +12,10 @@ export class GameManager extends Component {
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
 
-    // Using Component[] here to break the circular dependency loop
-    // Inside GameManager.ts
+    // Using Component[] to avoid circular dependency loops at the class level
     @property({ type: [Component] }) 
-    spawnerComponents: Spawner[] = [];
+    spawnerComponents: Component[] = [];
 
-    // Ensure currentStepIndex starts at 0 or the index of your first spawner
     public currentStepIndex: number = 0;
 
     @property(Node) allasseShiver: Node = null!;
@@ -39,7 +37,7 @@ export class GameManager extends Component {
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
-    private readonly TOTAL_STEPS = 4;
+    private readonly TOTAL_STEPS = 3; 
 
     private hintTimer: number = 0;
     private readonly HINT_DELAY: number = 6.0; 
@@ -178,15 +176,25 @@ export class GameManager extends Component {
                             this.scheduleOnce(() => {
                                 this.hideGridAndClearItems();
                                 this.completedSteps.add(scriptB.prefabIndex);
-                                if (this.spawnerComponents[this.currentStepIndex]) {
-                                    this.spawnerComponents[this.currentStepIndex].selfDestruct();
+
+                                // DUCK TYPING FIX: Force access to selfDestruct
+                                const spawnerComp = this.spawnerComponents[this.currentStepIndex];
+                                if (spawnerComp) {
+                                    const spawnerAny = spawnerComp as any;
+                                    if (typeof spawnerAny.selfDestruct === 'function') {
+                                        spawnerAny.selfDestruct();
+                                    } else {
+                                        spawnerComp.node.destroy();
+                                    }
                                 }
+
                                 if (scriptB.prefabIndex === 0) {
                                     this.triggerTrashCollection(targetOccupant);
                                 } else {
                                     if(targetOccupant.isValid) targetOccupant.destroy();
                                     this.executeTransition(scriptB.prefabIndex);
                                 }
+                                
                                 this.currentStepIndex++;
                                 if (this.completedSteps.size === this.TOTAL_STEPS) this.celebrateCompletion();
                             }, 1.0);
@@ -255,17 +263,22 @@ export class GameManager extends Component {
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
             case 0: 
+                // TRASH finished -> Background fix
                 this.fadeNodes(this.bgWinter, this.bgSummer); 
                 break;
             case 1: 
+                // TOOLS finished -> Fix Windows AND Tables
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect(); 
+                
+                // Tables fix with a slight delay
+                this.scheduleOnce(() => {
+                    this.fadeNodes(this.brokenTables, this.fixedTables); 
+                }, 0.6);
                 break;
             case 2: 
-                this.fadeNodes(this.brokenTables, this.fixedTables); 
-                break;
-            case 3: 
-                this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
+                // FIREPLACE finished -> Fix Fireplace
+                this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
                 break;
         }
     }

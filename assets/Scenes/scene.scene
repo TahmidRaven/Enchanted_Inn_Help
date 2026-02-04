@@ -214,7 +214,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 960.0000000000001,
+    "_orthoHeight": 959.9999999999999,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -4184,10 +4184,6 @@
         "__expectedType__": "cc.Prefab"
       },
       {
-        "__uuid__": "16b31671-c858-4f02-b5d0-b1a23e3d18b4",
-        "__expectedType__": "cc.Prefab"
-      },
-      {
         "__uuid__": "5c59246e-5aef-43b0-9b13-aa134799505a",
         "__expectedType__": "cc.Prefab"
       },
@@ -4258,13 +4254,10 @@
         "__id__": 116
       },
       {
-        "__id__": 130
+        "__id__": 138
       },
       {
-        "__id__": 142
-      },
-      {
-        "__id__": 154
+        "__id__": 150
       }
     ],
     "allasseShiver": {
@@ -4465,7 +4458,7 @@
         "__id__": 123
       }
     ],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 126
@@ -4894,7 +4887,7 @@
     "gameManagerNode": {
       "__id__": 113
     },
-    "prefabIndex": 1,
+    "prefabIndex": 0,
     "_id": "f8gW9dLCJMvJc+WYXxLXQQ"
   },
   {
@@ -5342,7 +5335,7 @@
     "gameManagerNode": {
       "__id__": 113
     },
-    "prefabIndex": 2,
+    "prefabIndex": 1,
     "_id": "056vDNl2VMo7Xj+WrPvin1"
   },
   {
@@ -5790,7 +5783,7 @@
     "gameManagerNode": {
       "__id__": 113
     },
-    "prefabIndex": 3,
+    "prefabIndex": 2,
     "_id": "3feo7ue5VCG7S/F67RA+zb"
   },
   {
