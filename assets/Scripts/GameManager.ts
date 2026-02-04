@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, Animation } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
-import { VictoryScreen } from './VictoryScreen'; // Added Import
+import { VictoryScreen } from './VictoryScreen';
 
 const { ccclass, property } = _decorator;
 
@@ -9,14 +9,12 @@ const { ccclass, property } = _decorator;
 export class GameManager extends Component {
     @property([Prefab]) stagePrefabs: Prefab[] = []; 
     @property([Node]) slots: Node[] = []; 
-    @property(Node) gridContainer: Node = null!;
+    @property(Node) gridContainer: Node = null!; // The logic node containing slot positions
+    @property(Node) gridVisualImage: Node = null!; // The actual wooden grid image
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
-
-    @property({ type: [Component] }) 
-    spawnerComponents: Component[] = [];
-
-    // Added VictoryScreen property
+    @property({ type: [Component] }) spawnerComponents: Component[] = [];
     @property(VictoryScreen) victoryScreen: VictoryScreen = null!;
+    @property(Node) decisionUINode: Node = null!; 
 
     public currentStepIndex: number = 0;
 
@@ -40,13 +38,14 @@ export class GameManager extends Component {
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
     private readonly TOTAL_STEPS = 3; 
-
     private hintTimer: number = 0;
     private readonly HINT_DELAY: number = 6.0; 
     private activeHintNodes: Node[] = [];
 
     onLoad() {
-        if (this.gridContainer) this.gridContainer.active = false;
+        // Force hide both the logic container and the visual grid image on start
+        this.setGridVisibility(false);
+        
         this.toggleCharacterState(this.allasseHappy, false);
         this.toggleCharacterState(this.nymeraHappy, false);
         this.setNodeActive(this.bgSummer, false);
@@ -54,6 +53,30 @@ export class GameManager extends Component {
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
         if (this.snowNode) this.snowNode.active = true;
+
+        if (this.decisionUINode) {
+            // Listen for both Help and Leave events
+            this.decisionUINode.on('DECISION_HELP', this.onStartGame, this);
+            this.decisionUINode.on('DECISION_LEAVE', this.onFastForwardToVictory, this);
+        }
+    }
+
+    private onStartGame() {
+        console.log("Game started after decision. Grid remains hidden until first spawn.");
+        this.setGridVisibility(false);
+    }
+
+    private onFastForwardToVictory() {
+        console.log("Player chose to leave. Showing victory screen.");
+        this.setGridVisibility(false);
+        if (this.victoryScreen) {
+            this.victoryScreen.show();
+        }
+    }
+
+    private setGridVisibility(visible: boolean) {
+        if (this.gridContainer) this.gridContainer.active = visible;
+        if (this.gridVisualImage) this.gridVisualImage.active = visible;
     }
 
     update(dt: number) {
@@ -104,7 +127,8 @@ export class GameManager extends Component {
 
     public spawnFromSpawner(prefabIndex: number) {
         this.clearHints();
-        if (this.gridContainer) this.gridContainer.active = true;
+        // Activate grid only when the player actually starts a merge task
+        this.setGridVisibility(true); 
 
         const coreLevels = [0, 0, 1, 2];
         coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
@@ -177,7 +201,7 @@ export class GameManager extends Component {
                     .call(() => {
                         if (scriptB.upgrade()) {
                             this.scheduleOnce(() => {
-                                this.hideGridAndClearItems();
+                                this.hideGridAndClearItems(); 
                                 this.completedSteps.add(scriptB.prefabIndex);
 
                                 const spawnerComp = this.spawnerComponents[this.currentStepIndex];
@@ -209,7 +233,7 @@ export class GameManager extends Component {
     }
 
     private hideGridAndClearItems() {
-        if (this.gridContainer) this.gridContainer.active = false;
+        this.setGridVisibility(false);
         this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
         this.occupancy.fill(null);
         this.clearHints();
@@ -217,13 +241,11 @@ export class GameManager extends Component {
 
     private celebrateCompletion() {
         this.scheduleOnce(() => {
-            // Swap character visuals
             this.toggleCharacterState(this.allasseShiver, false);
             this.toggleCharacterState(this.nymeraShiver, false);
             this.toggleCharacterState(this.allasseHappy, true);
             this.toggleCharacterState(this.nymeraHappy, true);
 
-            // Show Victory Screen after a small delay for the characters to react
             if (this.victoryScreen) {
                 this.scheduleOnce(() => {
                     this.victoryScreen.show();
