@@ -37,8 +37,8 @@ export class Spawner extends Component {
 
     private playBreathingAnimation() {
         this.breathingTween = tween(this.node as Node)
-            .to(0.8, { scale: new Vec3(1.1, 1.1, 1.1) }, { easing: 'sineInOut' })
-            .to(0.8, { scale: new Vec3(1.0, 1.0, 1.0) }, { easing: 'sineInOut' })
+            .to(0.8, { scale: new Vec3(2, 2, 2) }, { easing: 'sineInOut' })
+            .to(0.8, { scale: new Vec3(2.3, 2.3, 2.3) }, { easing: 'sineInOut' })
             .union()
             .repeatForever()
             .start();
@@ -48,7 +48,7 @@ export class Spawner extends Component {
         if (this.breathingTween) {
             this.breathingTween.stop();
             this.breathingTween = null;
-            if (this.node.isValid) this.node.setScale(new Vec3(1, 1, 1));
+            if (this.node.isValid) this.node.setScale(new Vec3(2, 2, 2));
         }
     }
 
