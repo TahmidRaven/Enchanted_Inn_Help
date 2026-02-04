@@ -1,13 +1,15 @@
 import { _decorator, Component, Node, CCInteger, Vec3, tween, Tween } from 'cc';
-// We still import the type for TypeScript intelligence
 import { GameManager } from './GameManager'; 
+
 const { ccclass, property } = _decorator;
 
 @ccclass('Spawner')
 export class Spawner extends Component {
-    // FIX: Use an arrow function to lazily load the type
-    @property({ type: () => GameManager })
-    gameManager: GameManager = null!;
+    // We use a Node property to break the circular dependency loop in the Inspector
+    @property(Node)
+    gameManagerNode: Node = null!;
+
+    private gameManager: GameManager = null!;
 
     @property({ type: CCInteger }) 
     prefabIndex: number = 0; 
@@ -15,10 +17,18 @@ export class Spawner extends Component {
     private breathingTween: Tween<Node> | null = null;
 
     onLoad() {
+        // Find the GameManager component on the assigned Node
+        if (this.gameManagerNode) {
+            this.gameManager = this.gameManagerNode.getComponent(GameManager)!;
+        } else {
+            console.error("Spawner: gameManagerNode is not assigned in the Inspector!");
+        }
+        
         this.node.on(Node.EventType.TOUCH_END, this.onSpawnerClicked, this);
     }
 
     update() {
+        // Only play animation if this is the active spawner for the current step
         if (this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
             if (!this.breathingTween) {
                 this.playBreathingAnimation();

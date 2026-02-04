@@ -7,6 +7,10 @@ const { ccclass, property } = _decorator;
 export class Draggable extends Component {
     private originalParent: Node = null!; 
     private topLayerNode: Node = null!;
+    // Storing the "Home" state data manually
+    private homePosition: Vec3 = new Vec3(0, 0, 0);
+    private homeScale: Vec3 = new Vec3(1, 1, 1);
+    
     public gm: GameManager = null!;
 
     onLoad() {
@@ -19,12 +23,18 @@ export class Draggable extends Component {
 
     onTouchStart(event: EventTouch) {
         if (this.gm) this.gm.clearHints();
+        
+        // Save "Clone" data of the current state before moving to top layer
         this.originalParent = this.node.parent!;
-        const worldPos = this.node.worldPosition;
+        this.homePosition = this.node.position.clone(); // Usually (0,0,0)
+        this.homeScale = this.node.scale.clone();
+        
+        const worldPos = this.node.worldPosition.clone();
 
         if (this.topLayerNode) {
             this.node.setParent(this.topLayerNode);
             this.node.setWorldPosition(worldPos);
+            
             tween(this.node as Node)
                 .to(0.1, { scale: new Vec3(1.1, 1.1, 1.1) }, { easing: 'sineOut' })
                 .start();
@@ -40,44 +50,29 @@ export class Draggable extends Component {
         const touchPos = event.getUILocation();
         const worldTouch = new Vec3(touchPos.x, touchPos.y, 0);
         
-        tween(this.node as Node)
-            .to(0.1, { scale: new Vec3(1, 1, 1) })
-            .start();
-
         if (this.gm) {
             const nearestIdx = this.gm.getNearestSlot(worldTouch);
             if (nearestIdx !== -1) {
                 this.gm.handleMove(this.node, nearestIdx);
             } else {
-                this.playInvalidDropEffect();
+                this.returnToHome();
             }
         } else {
             this.returnToHome();
         }
     }
 
-    private playInvalidDropEffect() {
-        tween(this.node as Node)
-            .by(0.05, { position: new Vec3(10, 0, 0) })
-            .by(0.05, { position: new Vec3(-20, 0, 0) })
-            .by(0.05, { position: new Vec3(10, 0, 0) })
-            .call(() => { this.returnToHome(); })
-            .start();
-    }
-
     public returnToHome() {
         if (this.originalParent && this.originalParent.isValid) {
-            const currentWorldPos = this.node.worldPosition.clone();
+            // Reparent first
             this.node.setParent(this.originalParent);
 
-            const uiTrans = this.originalParent.getComponent(UITransform);
-            if (uiTrans) {
-                const localPos = uiTrans.convertToNodeSpaceAR(currentWorldPos);
-                this.node.setPosition(localPos);
-            }
-
+            // Instead of calculating math, we restore the "Clone" data we saved
             tween(this.node as Node)
-                .to(0.2, { position: new Vec3(0, 0, 0) }, { easing: 'backOut' })
+                .to(0.2, { 
+                    position: this.homePosition, 
+                    scale: this.homeScale 
+                }, { easing: 'backOut' })
                 .start();
         }
     }

@@ -214,7 +214,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 960,
+    "_orthoHeight": 960.0000000000001,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -4324,8 +4324,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "gameManager": {
-      "__id__": 115
+    "gameManagerNode": {
+      "__id__": 113
     },
     "prefabIndex": 0,
     "_id": "32ttQ4YslGUJvKh1xUAyPA"
@@ -4891,8 +4891,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "gameManager": {
-      "__id__": 115
+    "gameManagerNode": {
+      "__id__": 113
     },
     "prefabIndex": 1,
     "_id": "f8gW9dLCJMvJc+WYXxLXQQ"
@@ -5339,8 +5339,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "gameManager": {
-      "__id__": 115
+    "gameManagerNode": {
+      "__id__": 113
     },
     "prefabIndex": 2,
     "_id": "056vDNl2VMo7Xj+WrPvin1"
@@ -5787,8 +5787,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "gameManager": {
-      "__id__": 115
+    "gameManagerNode": {
+      "__id__": 113
     },
     "prefabIndex": 3,
     "_id": "3feo7ue5VCG7S/F67RA+zb"
@@ -6207,8 +6207,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -693.521,
-      "y": 774.267,
+      "x": -519.094,
+      "y": 691.414,
       "z": 0
     },
     "_lrot": {
@@ -6277,7 +6277,7 @@
       "a": 255
     },
     "duration": -1,
-    "emissionRate": 1000,
+    "emissionRate": 690,
     "life": 5,
     "lifeVar": 5,
     "angle": 0,
@@ -6297,7 +6297,7 @@
     },
     "posVar": {
       "__type__": "cc.Vec2",
-      "x": 20,
+      "x": 15,
       "y": 200
     },
     "emitterMode": 0,
@@ -6332,7 +6332,7 @@
       "__uuid__": "f12a23c4-b924-4322-a260-3d982428f1e8@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_totalParticles": 1000,
+    "_totalParticles": 790,
     "_startColor": {
       "__type__": "cc.Color",
       "r": 255,

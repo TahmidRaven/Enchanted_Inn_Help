@@ -12,7 +12,13 @@ export class GameManager extends Component {
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
 
-    @property({ type: [() => Spawner] }) spawnerComponents: Spawner[] = [];
+    // Using Component[] here to break the circular dependency loop
+    // Inside GameManager.ts
+    @property({ type: [Component] }) 
+    spawnerComponents: Spawner[] = [];
+
+    // Ensure currentStepIndex starts at 0 or the index of your first spawner
+    public currentStepIndex: number = 0;
 
     @property(Node) allasseShiver: Node = null!;
     @property(Node) allasseHappy: Node = null!;
@@ -29,8 +35,6 @@ export class GameManager extends Component {
     @property(Node) fixedTables: Node = null!;
     @property(Node) brokenFireplace: Node = null!;
     @property(Node) fixedFireplace: Node = null!;
-
-    // NEW: Reference to the snow particle node
     @property(Node) snowNode: Node = null!; 
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
@@ -50,8 +54,6 @@ export class GameManager extends Component {
         this.setNodeActive(this.fixedWindows, false);
         this.setNodeActive(this.fixedTables, false);
         this.setNodeActive(this.fixedFireplace, false);
-        
-        // Ensure snow is active at the start
         if (this.snowNode) this.snowNode.active = true;
     }
 
@@ -258,7 +260,7 @@ export class GameManager extends Component {
                 break;
             case 1: 
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
-                this.stopSnowEffect(); // UPDATED: Stop snow when window is fixed
+                this.stopSnowEffect(); 
                 break;
             case 2: 
                 this.fadeNodes(this.brokenTables, this.fixedTables); 
@@ -269,12 +271,11 @@ export class GameManager extends Component {
         }
     }
 
-    // NEW: Helper to stop particles
     private stopSnowEffect() {
         if (this.snowNode) {
             const ps = this.snowNode.getComponent(ParticleSystem2D);
             if (ps) {
-                ps.stopSystem(); // Stop emission so existing flakes finish falling
+                ps.stopSystem(); 
             } else {
                 this.snowNode.active = false;
             }
