@@ -1,7 +1,6 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, Animation } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
-import { Spawner } from './Spawner';
 
 const { ccclass, property } = _decorator;
 
@@ -12,7 +11,6 @@ export class GameManager extends Component {
     @property(Node) gridContainer: Node = null!;
     @property(Prefab) mergeParticlePrefab: Prefab = null!;
 
-    // Using Component[] to avoid circular dependency loops at the class level
     @property({ type: [Component] }) 
     spawnerComponents: Component[] = [];
 
@@ -139,7 +137,7 @@ export class GameManager extends Component {
 
     public getNearestSlot(worldPos: Vec3): number {
         let nearestIdx = -1;
-        let minDist = 100;
+        let minDist = 100; // Snap distance
         this.slots.forEach((slot, idx) => {
             const dist = Vec3.distance(worldPos, slot.worldPosition);
             if (dist < minDist) {
@@ -150,20 +148,19 @@ export class GameManager extends Component {
         return nearestIdx;
     }
 
-    public handleMove(draggedNode: Node, targetIdx: number) {
+    public handleMove(draggedNode: Node, targetIdx: number): boolean {
         this.clearHints();
+        
+        if (targetIdx === -1) return false;
+
         const scriptA = draggedNode.getComponent(MergeItem)!;
         const oldIdx = scriptA.currentSlotIndex;
         const targetOccupant = this.occupancy[targetIdx];
 
-        if (!targetOccupant) {
-            this.occupancy[oldIdx] = null;
-            this.occupancy[targetIdx] = draggedNode;
-            draggedNode.setParent(this.slots[targetIdx]);
-            draggedNode.setPosition(0, 0, 0);
-            scriptA.currentSlotIndex = targetIdx;
-        } else if (targetOccupant !== draggedNode) {
+        // NO SWAPPING/EMPTY MOVING: Only allow if there's a different occupant to merge with
+        if (targetOccupant && targetOccupant !== draggedNode) {
             const scriptB = targetOccupant.getComponent(MergeItem)!;
+            
             if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
                 this.occupancy[oldIdx] = null;
                 this.playMergeParticle(targetOccupant.worldPosition);
@@ -177,7 +174,6 @@ export class GameManager extends Component {
                                 this.hideGridAndClearItems();
                                 this.completedSteps.add(scriptB.prefabIndex);
 
-                                // DUCK TYPING FIX: Force access to selfDestruct
                                 const spawnerComp = this.spawnerComponents[this.currentStepIndex];
                                 if (spawnerComp) {
                                     const spawnerAny = spawnerComp as any;
@@ -200,13 +196,16 @@ export class GameManager extends Component {
                             }, 1.0);
                         }
                     }).start();
+                
                 draggedNode.destroy();
-            } else {
-                draggedNode.getComponent(Draggable)?.returnToHome();
+                return true; 
             }
         }
+
+        return false; 
     }
 
+    // ... (rest of helper functions like celebrateCompletion, executeTransition, etc. remain the same)
     private celebrateCompletion() {
         this.scheduleOnce(() => {
             this.toggleCharacterState(this.allasseShiver, false);
@@ -263,21 +262,16 @@ export class GameManager extends Component {
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
             case 0: 
-                // TRASH finished -> Background fix
                 this.fadeNodes(this.bgWinter, this.bgSummer); 
                 break;
             case 1: 
-                // TOOLS finished -> Fix Windows AND Tables
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect(); 
-                
-                // Tables fix with a slight delay
                 this.scheduleOnce(() => {
                     this.fadeNodes(this.brokenTables, this.fixedTables); 
                 }, 0.6);
                 break;
             case 2: 
-                // FIREPLACE finished -> Fix Fireplace
                 this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
                 break;
         }
