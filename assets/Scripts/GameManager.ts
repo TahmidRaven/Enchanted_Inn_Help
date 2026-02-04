@@ -39,11 +39,10 @@ export class GameManager extends Component {
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
-    public currentStepIndex: number = 0; 
     private readonly TOTAL_STEPS = 4;
 
     private hintTimer: number = 0;
-    private readonly HINT_DELAY: number = 3.0; 
+    private readonly HINT_DELAY: number = 6.0; 
     private activeHintNodes: Node[] = [];
 
     onLoad() {
