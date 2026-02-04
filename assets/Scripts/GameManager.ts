@@ -17,6 +17,7 @@ export class GameManager extends Component {
     @property(Node) decisionUINode: Node = null!; 
 
     public currentStepIndex: number = 0;
+    public gameStarted: boolean = false;
 
     @property(Node) allasseShiver: Node = null!;
     @property(Node) allasseHappy: Node = null!;
@@ -43,7 +44,7 @@ export class GameManager extends Component {
     private activeHintNodes: Node[] = [];
 
     onLoad() {
-        // Force hide both the logic container and the visual grid image on start
+
         this.setGridVisibility(false);
         
         this.toggleCharacterState(this.allasseHappy, false);
@@ -55,14 +56,14 @@ export class GameManager extends Component {
         if (this.snowNode) this.snowNode.active = true;
 
         if (this.decisionUINode) {
-            // Listen for both Help and Leave events
             this.decisionUINode.on('DECISION_HELP', this.onStartGame, this);
             this.decisionUINode.on('DECISION_LEAVE', this.onFastForwardToVictory, this);
         }
     }
 
     private onStartGame() {
-        console.log("Game started after decision. Grid remains hidden until first spawn.");
+        console.log("Game started! Spawners are now allowed to animate.");
+        this.gameStarted = true; 
         this.setGridVisibility(false);
     }
 

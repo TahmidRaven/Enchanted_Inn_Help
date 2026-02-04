@@ -20,13 +20,17 @@ export class Spawner extends Component {
         if (this.gameManagerNode) {
             this.gameManager = this.gameManagerNode.getComponent(GameManager)!;
         }
-        
         this.node.on(Node.EventType.TOUCH_END, this.onSpawnerClicked, this);
     }
 
     update() {
-        // Only play animation if this is the active spawner and hasn't been used
-        if (!this.isUsed && this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
+        // ADDED CHECK: Only animate if the game has actually started
+        const canAnimate = !this.isUsed && 
+                          this.gameManager && 
+                          this.gameManager.gameStarted && 
+                          this.gameManager.currentStepIndex === this.prefabIndex;
+
+        if (canAnimate) {
             if (!this.breathingTween) {
                 this.playBreathingAnimation();
             }
@@ -53,25 +57,24 @@ export class Spawner extends Component {
     }
 
     onSpawnerClicked() {
-        // Restriction: Trigger spawn only once
-        if (!this.isUsed && this.gameManager && this.gameManager.currentStepIndex === this.prefabIndex) {
+        // ADDED CHECK: Player cannot click spawner if game hasn't started
+        if (!this.gameManager || !this.gameManager.gameStarted) return;
+
+        if (!this.isUsed && this.gameManager.currentStepIndex === this.prefabIndex) {
             this.isUsed = true; 
             this.stopBreathing();
             this.gameManager.spawnFromSpawner(this.prefabIndex);
             
-            // Visual feedback: Dim the spawner
             const sprite = this.node.getComponent(Sprite);
             if (sprite) {
-                // Corrected: Using Color class instead of 'any'
                 tween(sprite).to(0.3, { color: new Color(150, 150, 150, 255) }).start();
             }
         }
     }
 
     public selfDestruct() {
-        this.stopBreathing();
-        tween(this.node as Node)
-            .to(0.3, { scale: Vec3.ZERO }, { easing: 'backIn' })
+        tween(this.node)
+            .to(0.5, { scale: Vec3.ZERO, angle: 180 }, { easing: 'backIn' })
             .call(() => {
                 this.node.destroy();
             })

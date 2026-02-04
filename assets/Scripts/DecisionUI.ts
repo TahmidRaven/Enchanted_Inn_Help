@@ -38,11 +38,12 @@ export class DecisionUI extends Component {
     }
 
     onLeaveClicked() {
-        console.log("Player chose to leave.");
+        console.log("[DecisionUI] Leave button clicked.");
         this.hide(() => {
             this.node.emit('DECISION_LEAVE');
         });
     }
+
 
     public hide(onComplete?: Function) {
         if (this.opacity) {
@@ -53,6 +54,10 @@ export class DecisionUI extends Component {
                     if (onComplete) onComplete();
                 })
                 .start();
+        } else {
+
+            this.node.active = false;
+            if (onComplete) onComplete();
         }
     }
 }
