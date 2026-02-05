@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, UIOpacity } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
 import { VictoryScreen } from './VictoryScreen';
@@ -53,7 +53,6 @@ export class GameManager extends Component {
         this.updateCharacterVisuals("HIGH");
         if (this.bgWinter) this.bgWinter.active = true;
         
-        // Initial state for transition nodes
         const hiddenAtStart = [
             this.fixedFloor, this.fixedWindows, 
             this.dragonNode, this.fireTransitionNode, this.fireplaceFixedAnimSeq
@@ -154,15 +153,20 @@ export class GameManager extends Component {
             case 0: // Floor Fixed
                 this.fadeInNode(this.fixedFloor);
                 break;
-            case 1: // Windows Fixed
+            case 1: // Windows Fixed + TABLE TRANSITION
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect();
                 this.updateCharacterVisuals("LOW"); 
-                if (this.tableTransition) this.tableTransition.playTransition();
+
+                // --- TABLE TRANSITION LOGIC ---
+                if (this.tableTransition) {
+                    this.tableTransition.playTransition();
+                }
+
                 this.currentStepIndex = 2;
                 this.checkCelebration();
                 break;
-            case 2: // Fireplace - DRAGON -> FIRE -> ANIM SEQ
+            case 2: // Fireplace Transition
                 this.playFireplaceSequence();
                 break;
         }
@@ -170,38 +174,49 @@ export class GameManager extends Component {
 
     private playFireplaceSequence() {
         if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
-            console.error("Fireplace sequence nodes missing!");
             this.currentStepIndex = 3;
             this.checkCelebration();
             return;
         }
 
-        // 1. Dragon Appears
+        this.setNodeOpacity(this.dragonNode, 0);
+        this.setNodeOpacity(this.fireTransitionNode, 0);
+        this.setNodeOpacity(this.fireplaceFixedAnimSeq, 0);
+
         this.dragonNode.active = true;
         this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
 
-        this.scheduleOnce(() => {
-            // 2. Fire Transition Starts
-            this.fireTransitionNode.active = true;
-            this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
-
-            this.scheduleOnce(() => {
-                // 3. Fireplace Animation Sequence Starts
+        tween(this.getOpacityComp(this.dragonNode))
+            .to(0.5, { opacity: 255 })
+            .delay(1.5)
+            .call(() => {
+                this.fireTransitionNode.active = true;
+                this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
+                tween(this.getOpacityComp(this.dragonNode)).to(0.3, { opacity: 0 }).call(() => this.dragonNode.active = false).start();
+                tween(this.getOpacityComp(this.fireTransitionNode)).to(0.3, { opacity: 255 }).start();
+            })
+            .delay(1.2)
+            .call(() => {
                 this.fireplaceFixedAnimSeq.active = true;
-                
-                // Cleanup Dragon and Fire
-                this.dragonNode.active = false;
-                this.fireTransitionNode.active = false;
+                tween(this.getOpacityComp(this.fireTransitionNode)).to(0.5, { opacity: 0 }).call(() => this.fireTransitionNode.active = false).start();
+                tween(this.getOpacityComp(this.fireplaceFixedAnimSeq)).to(0.5, { opacity: 255 }).start();
+            })
+            .delay(1.0)
+            .call(() => {
+                this.currentStepIndex = 3;
+                this.checkCelebration();
+            })
+            .start();
+    }
 
-                // 4. Wait for the Fixed Animation Sequence (2 seconds)
-                this.scheduleOnce(() => {
-                    this.currentStepIndex = 3;
-                    this.checkCelebration();
-                }, 2.0);
+    private getOpacityComp(node: Node): UIOpacity {
+        let comp = node.getComponent(UIOpacity);
+        if (!comp) comp = node.addComponent(UIOpacity);
+        return comp;
+    }
 
-            }, 1.5); // Fire duration before swap
-
-        }, 2.0); // Dragon delay before breathing fire
+    private setNodeOpacity(node: Node, value: number) {
+        this.getOpacityComp(node).opacity = value;
     }
 
     private hideGridAndClearItems() {
@@ -231,21 +246,16 @@ export class GameManager extends Component {
     private fadeInNode(node: Node) {
         if (!node) return;
         node.active = true;
-        const sprite = node.getComponent(Sprite);
-        if (sprite) {
-            sprite.color = new Color(255, 255, 255, 0);
-            tween(sprite).to(1.0, { color: Color.WHITE }).start();
-        }
+        this.setNodeOpacity(node, 0);
+        tween(this.getOpacityComp(node)).to(1.0, { opacity: 255 }).start();
     }
 
     private fadeNodes(oldNode: Node, newNode: Node) {
         if (oldNode) {
-            const oldSprite = oldNode.getComponent(Sprite);
-            if (oldSprite) {
-                tween(oldSprite).to(1.0, { color: new Color(255, 255, 255, 0) })
+            tween(this.getOpacityComp(oldNode))
+                .to(1.0, { opacity: 0 })
                 .call(() => oldNode.active = false)
                 .start();
-            }
         }
         if (newNode) this.fadeInNode(newNode);
     }
