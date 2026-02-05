@@ -3,6 +3,7 @@ import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
 import { VictoryScreen } from './VictoryScreen';
 import { TrashAnimation } from './TrashAnimation'; 
+import { TableTransition } from './TableTransition';
 
 const { ccclass, property } = _decorator;
 
@@ -18,6 +19,7 @@ export class GameManager extends Component {
     @property(Node) decisionUINode: Node = null!; 
 
     @property(TrashAnimation) trashAnim: TrashAnimation = null!; 
+    @property(TableTransition) tableTransition: TableTransition = null!;
 
     public currentStepIndex: number = 0;
     public gameStarted: boolean = false;
@@ -32,8 +34,6 @@ export class GameManager extends Component {
     @property(Node) trashItemsParent: Node = null!; 
     @property(Node) brokenWindows: Node = null!;
     @property(Node) fixedWindows: Node = null!;
-    @property(Node) brokenTables: Node = null!;
-    @property(Node) fixedTables: Node = null!;
     @property(Node) brokenFireplace: Node = null!;
     @property(Node) fixedFireplace: Node = null!;
     @property(Node) snowNode: Node = null!; 
@@ -47,10 +47,11 @@ export class GameManager extends Component {
         this.toggleCharacterState(this.allasseHappy, false);
         this.toggleCharacterState(this.nymeraHappy, false);
         if (this.bgWinter) this.bgWinter.active = true;
-        this.setNodeActive(this.fixedFloor, false);
-        this.setNodeActive(this.fixedWindows, false);
-        this.setNodeActive(this.fixedTables, false);
-        this.setNodeActive(this.fixedFireplace, false);
+        
+        // Hide fixed elements initially
+        [this.fixedFloor, this.fixedWindows, this.fixedFireplace].forEach(n => {
+            if(n) n.active = false;
+        });
 
         if (this.decisionUINode) {
             this.decisionUINode.on('DECISION_HELP', this.onStartGame, this);
@@ -108,7 +109,6 @@ export class GameManager extends Component {
                 if (scriptB.upgrade()) {
                     this.scheduleOnce(() => {
                         this.hideGridAndClearItems(); 
-                        
                         if (scriptB.prefabIndex === 0) {
                             this.triggerTrashCollection(targetOccupant);
                         } else {
@@ -133,13 +133,11 @@ export class GameManager extends Component {
         if (this.trashItemsParent) {
             this.trashItemsParent.children.forEach(c => { if(c.isValid) items.push(c); });
         }
-
         if (this.trashAnim) {
-            // Sequence updated to unlock the next spawner ONLY after animation
             this.trashAnim.playCleanup(items, () => {
                 this.completedSteps.add(0);
                 this.executeTransition(0); 
-                this.currentStepIndex = 1; // Explicitly set to next stage
+                this.currentStepIndex = 1; 
                 this.checkCelebration();
             });
         }
@@ -158,32 +156,17 @@ export class GameManager extends Component {
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
             case 0: 
-                this.fadeInNode(this.fixedFloor); // Fixed floor appears over bgWinter
+                this.fadeInNode(this.fixedFloor);
                 break;
             case 1: 
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect(); 
-                this.scheduleOnce(() => { 
-                    this.animateChildrenSequentially(this.brokenTables, false); 
-                    this.animateChildrenSequentially(this.fixedTables, true);
-                }, 0.6);
+                if (this.tableTransition) this.tableTransition.playTransition();
                 break;
             case 2: 
                 this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
                 break;
         }
-    }
-
-    private animateChildrenSequentially(parent: Node, fadeIn: boolean) {
-        if (!parent) return;
-        parent.active = true;
-        parent.children.forEach((child, idx) => {
-            const sprite = child.getComponent(Sprite);
-            if (sprite) {
-                sprite.color = new Color(255, 255, 255, fadeIn ? 0 : 255);
-                tween(sprite).delay(idx * 0.2).to(0.8, { color: new Color(255, 255, 255, fadeIn ? 255 : 0) }).start();
-            }
-        });
     }
 
     private fadeInNode(node: Node) {
@@ -192,7 +175,7 @@ export class GameManager extends Component {
         const sprite = node.getComponent(Sprite);
         if (sprite) {
             sprite.color = new Color(255, 255, 255, 0);
-            tween(sprite).to(1.0, { color: new Color(255, 255, 255, 255) }).start();
+            tween(sprite).to(1.0, { color: Color.WHITE }).start();
         }
     }
 
@@ -206,7 +189,11 @@ export class GameManager extends Component {
     private fadeNodes(oldNode: Node, newNode: Node) {
         if (oldNode) {
             const oldSprite = oldNode.getComponent(Sprite);
-            if (oldSprite) tween(oldSprite).to(1.0, { color: new Color(255, 255, 255, 0) }).call(() => oldNode.active = false).start();
+            if (oldSprite) {
+                tween(oldSprite).to(1.0, { color: new Color(255, 255, 255, 0) })
+                .call(() => oldNode.active = false)
+                .start();
+            }
         }
         if (newNode) this.fadeInNode(newNode);
     }
@@ -230,7 +217,6 @@ export class GameManager extends Component {
     }
 
     private toggleCharacterState(node: Node, active: boolean) { if (node) node.active = active; }
-    private setNodeActive(node: Node, active: boolean) { if (node) node.active = active; }
     public clearHints() {} 
     public getNearestSlot(worldPos: Vec3): number {
         let nearestIdx = -1; let minDist = 150;
