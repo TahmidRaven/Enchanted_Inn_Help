@@ -188,7 +188,7 @@ export class GameManager extends Component {
 
         tween(this.getOpacityComp(this.dragonNode))
             .to(0.5, { opacity: 255 })
-            .delay(1.5)
+            .delay(1.0)
             .call(() => {
                 this.fireTransitionNode.active = true;
                 this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
@@ -201,7 +201,7 @@ export class GameManager extends Component {
                 tween(this.getOpacityComp(this.fireTransitionNode)).to(0.5, { opacity: 0 }).call(() => this.fireTransitionNode.active = false).start();
                 tween(this.getOpacityComp(this.fireplaceFixedAnimSeq)).to(0.5, { opacity: 255 }).start();
             })
-            .delay(1.0)
+            .delay(2.0)
             .call(() => {
                 this.currentStepIndex = 3;
                 this.checkCelebration();

@@ -22,7 +22,6 @@
     ],
     "_active": true,
     "_components": [],
-    "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
@@ -1813,8 +1812,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 0.5,
-      "y": 0.5,
+      "x": 0.65,
+      "y": 0.65,
       "z": 1
     },
     "_mobility": 0,
@@ -4636,8 +4635,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1.25,
-      "y": 1.25,
+      "x": 0.6,
+      "y": 0.6,
       "z": 1
     },
     "_mobility": 0,
@@ -4662,8 +4661,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 486,
-      "height": 486
+      "width": 1016,
+      "height": 993
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -4693,7 +4692,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "373ec404-3a96-4ed6-95ca-438dacc39049@f9941",
+      "__uuid__": "bff88ad5-82cb-4f6a-8a9e-c5c5c5aca64e@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
