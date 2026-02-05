@@ -41,8 +41,8 @@ export class Spawner extends Component {
 
     private playBreathingAnimation() {
         this.breathingTween = tween(this.node as Node)
-            .to(0.8, { scale: new Vec3(2, 2, 2) }, { easing: 'sineInOut' })
-            .to(0.8, { scale: new Vec3(2.3, 2.3, 2.3) }, { easing: 'sineInOut' })
+            .to(0.8, { scale: new Vec3(1.25, 1.25, 1.25) }, { easing: 'sineInOut' })
+            .to(0.8, { scale: new Vec3(1.5, 1.5, 1.5) }, { easing: 'sineInOut' })
             .union()
             .repeatForever()
             .start();
@@ -64,6 +64,7 @@ export class Spawner extends Component {
             this.isUsed = true; 
             this.stopBreathing();
             this.gameManager.spawnFromSpawner(this.prefabIndex);
+            
             
             const sprite = this.node.getComponent(Sprite);
             if (sprite) {
