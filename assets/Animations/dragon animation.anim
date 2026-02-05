@@ -11,7 +11,7 @@
     "speed": 1,
     "wrapMode": 1,
     "enableTrsBlending": false,
-    "_duration": 1.6333333333333333,
+    "_duration": 1.5,
     "_hash": 500763545,
     "_tracks": [
       {
@@ -105,11 +105,7 @@
       1.3666666666666667,
       1.4,
       1.4333333333333333,
-      1.4666666666666666,
-      1.5,
-      1.5333333333333334,
-      1.5666666666666667,
-      1.6
+      1.4666666666666666
     ],
     "_values": [
       {
@@ -226,22 +222,6 @@
       },
       {
         "__uuid__": "8300327f-5fe2-4dbd-b890-9a758711ceb9@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "47b24950-3274-436c-b4db-95eb812b1e12@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "93943f57-7750-47ae-82b3-b92859684350@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "7f249b24-789f-45be-ae6b-6eeaeae4796e@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "3eb16f41-bc1d-432c-88fa-e157754f4dba@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
