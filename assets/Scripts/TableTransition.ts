@@ -33,11 +33,10 @@ export class TableTransition extends Component {
     private playSequentialBroken(onComplete: Function) {
         if (!this.brokenGroup) return;
         const children = this.brokenGroup.children;
-        const staggerDelay = 0.2; // Faster stagger for a snappier feel
-        const animDuration = 0.5;
+        const staggerDelay = 0.2; 
+        const animDuration = 0.7;
 
         children.forEach((child, index) => {
-            // Calculate a "pop down" position (current Y - 50 units)
             const popDownPos = new Vec3(child.position.x, child.position.y - 50, 0);
 
             tween(child)
@@ -45,7 +44,7 @@ export class TableTransition extends Component {
                 .to(animDuration, { 
                     scale: Vec3.ZERO, 
                     position: popDownPos 
-                }, { easing: 'backIn' }) // backIn gives that "recoil" before vanishing
+                }, { easing: 'backIn' })
                 .call(() => {
                     child.active = false;
                     if (index === children.length - 1) onComplete();
@@ -79,7 +78,7 @@ export class TableTransition extends Component {
 
         const sprite = this.fixedBottom.getComponent(Sprite);
         if (sprite) {
-            sprite.color = Color.WHITE.clone(); // Ensure it's fully opaque
+            sprite.color = Color.WHITE.clone(); // it's fully opaque
         }
 
         tween(this.fixedBottom)
