@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, CCInteger, Vec3, tween, Tween, Sprite, Color } from 'cc';
+import { _decorator, Component, Node, CCInteger, Vec3, tween, Tween, Sprite, Color, UIOpacity } from 'cc';
 import { GameManager } from './GameManager'; 
 
 const { ccclass, property } = _decorator;
@@ -24,7 +24,6 @@ export class Spawner extends Component {
     }
 
     update() {
-        // ADDED CHECK: Only animate if the game has actually started
         const canAnimate = !this.isUsed && 
                           this.gameManager && 
                           this.gameManager.gameStarted && 
@@ -57,7 +56,6 @@ export class Spawner extends Component {
     }
 
     onSpawnerClicked() {
-        // ADDED CHECK: Player cannot click spawner if game hasn't started
         if (!this.gameManager || !this.gameManager.gameStarted) return;
 
         if (!this.isUsed && this.gameManager.currentStepIndex === this.prefabIndex) {
@@ -65,20 +63,29 @@ export class Spawner extends Component {
             this.stopBreathing();
             this.gameManager.spawnFromSpawner(this.prefabIndex);
             
-            
-            const sprite = this.node.getComponent(Sprite);
-            if (sprite) {
-                tween(sprite).to(0.3, { color: new Color(150, 150, 150, 255) }).start();
-            }
+            this.fadeOutAndDestroy();
         }
     }
 
-    public selfDestruct() {
-        tween(this.node)
-            .to(0.5, { scale: Vec3.ZERO, angle: 180 }, { easing: 'backIn' })
+
+    private fadeOutAndDestroy() {
+        let opacityComp = this.getComponent(UIOpacity);
+        if (!opacityComp) {
+            opacityComp = this.addComponent(UIOpacity);
+        }
+
+        tween(opacityComp)
+            .to(0.6, { opacity: 0 }, { easing: 'sineOut' })
             .call(() => {
-                this.node.destroy();
+                if (this.node && this.node.isValid) {
+                    this.node.destroy(); // des
+                }
             })
             .start();
+    }
+
+
+    public selfDestruct() {
+        this.fadeOutAndDestroy();
     }
 }

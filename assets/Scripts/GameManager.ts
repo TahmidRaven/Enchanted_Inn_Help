@@ -201,7 +201,7 @@ export class GameManager extends Component {
                 tween(this.getOpacityComp(this.fireTransitionNode)).to(0.5, { opacity: 0 }).call(() => this.fireTransitionNode.active = false).start();
                 tween(this.getOpacityComp(this.fireplaceFixedAnimSeq)).to(0.5, { opacity: 255 }).start();
             })
-            .delay(2.0)
+            .delay(3.0)
             .call(() => {
                 this.currentStepIndex = 3;
                 this.checkCelebration();
