@@ -172,7 +172,7 @@ export class GameManager extends Component {
         }
     }
 
-    private playFireplaceSequence() {
+private playFireplaceSequence() {
         if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
             this.currentStepIndex = 3;
             this.checkCelebration();
@@ -201,9 +201,12 @@ export class GameManager extends Component {
                 tween(this.getOpacityComp(this.fireTransitionNode)).to(0.5, { opacity: 0 }).call(() => this.fireTransitionNode.active = false).start();
                 tween(this.getOpacityComp(this.fireplaceFixedAnimSeq)).to(0.5, { opacity: 255 }).start();
             })
-            .delay(3.0)
+            .delay(0.5) 
             .call(() => {
                 this.currentStepIndex = 3;
+                this.updateCharacterVisuals("HAPPY"); 
+                
+                // trigger hold 2 sec 
                 this.checkCelebration();
             })
             .start();
@@ -275,12 +278,14 @@ export class GameManager extends Component {
         this.scheduleOnce(() => { if(p.isValid) p.destroy(); }, 2.0);
     }
 
-    private checkCelebration() {
+private checkCelebration() {
         if (this.completedSteps.size === this.TOTAL_STEPS) {
+            // Hold for 2 seconds 
             this.scheduleOnce(() => {
-                this.updateCharacterVisuals("HAPPY");
-                if (this.victoryScreen) this.victoryScreen.show();
-            }, 1.0);
+                if (this.victoryScreen) {
+                    this.victoryScreen.show();
+                }
+            }, 2.5); 
         }
     }
 
