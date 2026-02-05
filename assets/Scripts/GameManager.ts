@@ -21,9 +21,10 @@ export class GameManager extends Component {
     @property(TrashAnimation) trashAnim: TrashAnimation = null!; 
     @property(TableTransition) tableTransition: TableTransition = null!;
 
-    // --- NEW ANIMATION NODES ---
+    // --- ANIMATION NODES ---
     @property(Node) dragonNode: Node = null!;
     @property(Node) fireTransitionNode: Node = null!;
+    @property(Node) fireplaceFixedAnimSeq: Node = null!;
 
     public currentStepIndex: number = 0;
     public gameStarted: boolean = false;
@@ -41,8 +42,6 @@ export class GameManager extends Component {
     @property(Node) trashItemsParent: Node = null!; 
     @property(Node) brokenWindows: Node = null!;
     @property(Node) fixedWindows: Node = null!;
-    @property(Node) brokenFireplace: Node = null!;
-    @property(Node) fixedFireplace: Node = null!;
     @property(Node) snowNode: Node = null!; 
 
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
@@ -54,10 +53,10 @@ export class GameManager extends Component {
         this.updateCharacterVisuals("HIGH");
         if (this.bgWinter) this.bgWinter.active = true;
         
-        // Ensure transition nodes are hidden initially
+        // Initial state for transition nodes
         const hiddenAtStart = [
-            this.fixedFloor, this.fixedWindows, this.fixedFireplace, 
-            this.dragonNode, this.fireTransitionNode
+            this.fixedFloor, this.fixedWindows, 
+            this.dragonNode, this.fireTransitionNode, this.fireplaceFixedAnimSeq
         ];
         hiddenAtStart.forEach(n => { if(n) n.active = false; });
 
@@ -163,44 +162,46 @@ export class GameManager extends Component {
                 this.currentStepIndex = 2;
                 this.checkCelebration();
                 break;
-            case 2: // Fireplace - DRAGON SEQUENCE
+            case 2: // Fireplace - DRAGON -> FIRE -> ANIM SEQ
                 this.playFireplaceSequence();
                 break;
         }
     }
 
     private playFireplaceSequence() {
-        if (!this.dragonNode || !this.fireTransitionNode) {
-            // Fallback if nodes are missing
-            this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
+        if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
+            console.error("Fireplace sequence nodes missing!");
             this.currentStepIndex = 3;
             this.checkCelebration();
             return;
         }
 
-        // 1. Show Dragon and bring to top of render list
+        // 1. Dragon Appears
         this.dragonNode.active = true;
         this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
 
-        // 2. Wait for Dragon animation to reach "breath" point
         this.scheduleOnce(() => {
-            // 3. Show Fire Transition and bring to top
+            // 2. Fire Transition Starts
             this.fireTransitionNode.active = true;
             this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
 
             this.scheduleOnce(() => {
-                // 4. Swap fireplace visuals while fire is active
-                this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
+                // 3. Fireplace Animation Sequence Starts
+                this.fireplaceFixedAnimSeq.active = true;
                 
-                // 5. Cleanup: Hide dragon and fire
+                // Cleanup Dragon and Fire
                 this.dragonNode.active = false;
                 this.fireTransitionNode.active = false;
 
-                this.currentStepIndex = 3;
-                this.checkCelebration();
-            }, 1.5); // fire duration
+                // 4. Wait for the Fixed Animation Sequence (2 seconds)
+                this.scheduleOnce(() => {
+                    this.currentStepIndex = 3;
+                    this.checkCelebration();
+                }, 2.0);
 
-        }, 2.0); // dragon appearance time
+            }, 1.5); // Fire duration before swap
+
+        }, 2.0); // Dragon delay before breathing fire
     }
 
     private hideGridAndClearItems() {
