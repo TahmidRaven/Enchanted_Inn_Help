@@ -21,18 +21,21 @@ export class GameManager extends Component {
     @property(TrashAnimation) trashAnim: TrashAnimation = null!; 
     @property(TableTransition) tableTransition: TableTransition = null!;
 
+    // --- NEW ANIMATION NODES ---
+    @property(Node) dragonNode: Node = null!;
+    @property(Node) fireTransitionNode: Node = null!;
+
     public currentStepIndex: number = 0;
     public gameStarted: boolean = false;
 
-    // --- CHARACTER STATE PROPERTIES ---
+    // --- CHARACTER VISUALS ---
     @property(Node) allasseShiverHigh: Node = null!;
     @property(Node) allasseShiverLow: Node = null!;
     @property(Node) allasseHappy: Node = null!;
-
-    // Nymera only has two states
     @property(Node) nymeraShiver: Node = null!;
     @property(Node) nymeraHappy: Node = null!;
 
+    // --- ROOM VISUALS ---
     @property(Node) bgWinter: Node = null!;
     @property(Node) fixedFloor: Node = null!; 
     @property(Node) trashItemsParent: Node = null!; 
@@ -48,29 +51,20 @@ export class GameManager extends Component {
 
     onLoad() {
         this.setGridVisibility(false);
-        
-        // Initial State: High cold
         this.updateCharacterVisuals("HIGH");
-
         if (this.bgWinter) this.bgWinter.active = true;
         
-        [this.fixedFloor, this.fixedWindows, this.fixedFireplace].forEach(n => {
-            if(n) n.active = false;
-        });
+        // Ensure transition nodes are hidden initially
+        const hiddenAtStart = [
+            this.fixedFloor, this.fixedWindows, this.fixedFireplace, 
+            this.dragonNode, this.fireTransitionNode
+        ];
+        hiddenAtStart.forEach(n => { if(n) n.active = false; });
 
         if (this.decisionUINode) {
             this.decisionUINode.on('DECISION_HELP', this.onStartGame, this);
             this.decisionUINode.on('DECISION_LEAVE', this.onFastForwardToVictory, this);
         }
-    }
-
-    public clearHints() {
-        this.occupancy.forEach(node => {
-            if (node && node.isValid) {
-                const item = node.getComponent(MergeItem);
-                if (item) item.stopHint();
-            }
-        });
     }
 
     private onStartGame() { this.gameStarted = true; }
@@ -82,7 +76,7 @@ export class GameManager extends Component {
     }
 
     public spawnFromSpawner(prefabIndex: number) {
-        this.setGridVisibility(true); 
+        this.setGridVisibility(true);
         const coreLevels = [0, 0, 1, 2];
         coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
         for (let i = 0; i < 3; i++) {
@@ -120,6 +114,7 @@ export class GameManager extends Component {
             if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
                 this.occupancy[scriptA.currentSlotIndex] = null;
                 this.playMergeParticle(targetOccupant.worldPosition);
+                
                 if (scriptB.upgrade()) {
                     this.scheduleOnce(() => {
                         this.hideGridAndClearItems(); 
@@ -129,8 +124,6 @@ export class GameManager extends Component {
                             this.completedSteps.add(scriptB.prefabIndex);
                             if(targetOccupant.isValid) targetOccupant.destroy();
                             this.executeTransition(scriptB.prefabIndex);
-                            this.currentStepIndex++;
-                            this.checkCelebration();
                         }
                     }, 1.5); 
                 }
@@ -150,15 +143,64 @@ export class GameManager extends Component {
         if (this.trashAnim) {
             this.trashAnim.playCleanup(items, () => {
                 this.completedSteps.add(0);
-                this.executeTransition(0); 
+                this.executeTransition(0);
                 this.currentStepIndex = 1; 
                 this.checkCelebration();
             });
         }
     }
 
-    private checkCelebration() {
-        if (this.completedSteps.size === this.TOTAL_STEPS) this.celebrateCompletion();
+    private executeTransition(stepIndex: number) {
+        switch(stepIndex) {
+            case 0: // Floor Fixed
+                this.fadeInNode(this.fixedFloor);
+                break;
+            case 1: // Windows Fixed
+                this.fadeNodes(this.brokenWindows, this.fixedWindows); 
+                this.stopSnowEffect();
+                this.updateCharacterVisuals("LOW"); 
+                if (this.tableTransition) this.tableTransition.playTransition();
+                this.currentStepIndex = 2;
+                this.checkCelebration();
+                break;
+            case 2: // Fireplace - DRAGON SEQUENCE
+                this.playFireplaceSequence();
+                break;
+        }
+    }
+
+    private playFireplaceSequence() {
+        if (!this.dragonNode || !this.fireTransitionNode) {
+            // Fallback if nodes are missing
+            this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
+            this.currentStepIndex = 3;
+            this.checkCelebration();
+            return;
+        }
+
+        // 1. Show Dragon and bring to top of render list
+        this.dragonNode.active = true;
+        this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
+
+        // 2. Wait for Dragon animation to reach "breath" point
+        this.scheduleOnce(() => {
+            // 3. Show Fire Transition and bring to top
+            this.fireTransitionNode.active = true;
+            this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
+
+            this.scheduleOnce(() => {
+                // 4. Swap fireplace visuals while fire is active
+                this.fadeNodes(this.brokenFireplace, this.fixedFireplace);
+                
+                // 5. Cleanup: Hide dragon and fire
+                this.dragonNode.active = false;
+                this.fireTransitionNode.active = false;
+
+                this.currentStepIndex = 3;
+                this.checkCelebration();
+            }, 1.5); // fire duration
+
+        }, 2.0); // dragon appearance time
     }
 
     private hideGridAndClearItems() {
@@ -167,35 +209,22 @@ export class GameManager extends Component {
         this.occupancy.fill(null);
     }
 
-    private executeTransition(stepIndex: number) {
-        switch(stepIndex) {
-            case 0: // Trash Cleared
-                this.fadeInNode(this.fixedFloor);
-                break;
-            case 1: // Windows Fixed
-                this.fadeNodes(this.brokenWindows, this.fixedWindows); 
-                this.stopSnowEffect();
-                // Allasse goes to low shiver, Nymera stays shivering
-                this.updateCharacterVisuals("LOW"); 
-                if (this.tableTransition) this.tableTransition.playTransition();
-                break;
-            case 2: // Fireplace Fixed
-                this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
-                break;
-        }
+    public clearHints() {
+        this.occupancy.forEach(node => {
+            if (node && node.isValid) {
+                const item = node.getComponent(MergeItem);
+                if (item) item.stopHint();
+            }
+        });
     }
 
     private updateCharacterVisuals(state: "HIGH" | "LOW" | "HAPPY") {
-        // Allasse logic (3 states)
         if (this.allasseShiverHigh) this.allasseShiverHigh.active = (state === "HIGH");
         if (this.allasseShiverLow) this.allasseShiverLow.active = (state === "LOW");
         if (this.allasseHappy) this.allasseHappy.active = (state === "HAPPY");
-
-        // Nymera logic (2 states)
-        // She only becomes HAPPY at the very end. Otherwise, she is SHIVERING.
-        const isGameFinished = (state === "HAPPY");
-        if (this.nymeraShiver) this.nymeraShiver.active = !isGameFinished;
-        if (this.nymeraHappy) this.nymeraHappy.active = isGameFinished;
+        const finished = (state === "HAPPY");
+        if (this.nymeraShiver) this.nymeraShiver.active = !finished;
+        if (this.nymeraHappy) this.nymeraHappy.active = finished;
     }
 
     private fadeInNode(node: Node) {
@@ -205,13 +234,6 @@ export class GameManager extends Component {
         if (sprite) {
             sprite.color = new Color(255, 255, 255, 0);
             tween(sprite).to(1.0, { color: Color.WHITE }).start();
-        }
-    }
-
-    private stopSnowEffect() {
-        if (this.snowNode) {
-            const ps = this.snowNode.getComponent(ParticleSystem2D);
-            if (ps) ps.stopSystem(); else this.snowNode.active = false;
         }
     }
 
@@ -227,6 +249,13 @@ export class GameManager extends Component {
         if (newNode) this.fadeInNode(newNode);
     }
 
+    private stopSnowEffect() {
+        if (this.snowNode) {
+            const ps = this.snowNode.getComponent(ParticleSystem2D);
+            if (ps) ps.stopSystem(); else this.snowNode.active = false;
+        }
+    }
+
     private playMergeParticle(worldPos: Vec3) {
         if (!this.mergeParticlePrefab) return;
         const p = instantiate(this.mergeParticlePrefab);
@@ -235,12 +264,13 @@ export class GameManager extends Component {
         this.scheduleOnce(() => { if(p.isValid) p.destroy(); }, 2.0);
     }
 
-    private celebrateCompletion() {
-        this.scheduleOnce(() => {
-            // Final Stage: Both become HAPPY
-            this.updateCharacterVisuals("HAPPY");
-            if (this.victoryScreen) this.victoryScreen.show();
-        }, 1.0);
+    private checkCelebration() {
+        if (this.completedSteps.size === this.TOTAL_STEPS) {
+            this.scheduleOnce(() => {
+                this.updateCharacterVisuals("HAPPY");
+                if (this.victoryScreen) this.victoryScreen.show();
+            }, 1.0);
+        }
     }
 
     public getNearestSlot(worldPos: Vec3): number {
