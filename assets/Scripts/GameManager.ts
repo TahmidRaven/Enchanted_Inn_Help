@@ -172,7 +172,7 @@ export class GameManager extends Component {
         }
     }
 
-private playFireplaceSequence() {
+    private playFireplaceSequence() {
         if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
             this.currentStepIndex = 3;
             this.checkCelebration();
@@ -197,6 +197,14 @@ private playFireplaceSequence() {
             })
             .delay(1.2)
             .call(() => {
+                // ---Fade out TableTransition when fireplace sequence finishes ---
+                if (this.tableTransition) {
+                    tween(this.getOpacityComp(this.tableTransition.node))
+                        .to(0.5, { opacity: 0 })
+                        .call(() => { this.tableTransition.node.active = false; })
+                        .start();
+                }
+
                 this.fireplaceFixedAnimSeq.active = true;
                 tween(this.getOpacityComp(this.fireTransitionNode)).to(0.5, { opacity: 0 }).call(() => this.fireTransitionNode.active = false).start();
                 tween(this.getOpacityComp(this.fireplaceFixedAnimSeq)).to(0.5, { opacity: 255 }).start();
@@ -205,8 +213,6 @@ private playFireplaceSequence() {
             .call(() => {
                 this.currentStepIndex = 3;
                 this.updateCharacterVisuals("HAPPY"); 
-                
-                // trigger hold 2 sec 
                 this.checkCelebration();
             })
             .start();
@@ -278,9 +284,8 @@ private playFireplaceSequence() {
         this.scheduleOnce(() => { if(p.isValid) p.destroy(); }, 2.0);
     }
 
-private checkCelebration() {
+    private checkCelebration() {
         if (this.completedSteps.size === this.TOTAL_STEPS) {
-            // Hold for 2 seconds 
             this.scheduleOnce(() => {
                 if (this.victoryScreen) {
                     this.victoryScreen.show();

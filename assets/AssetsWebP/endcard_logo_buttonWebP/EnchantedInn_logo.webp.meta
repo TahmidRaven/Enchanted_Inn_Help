@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "698bc80e-dc89-443e-b965-0d3c80187eb7",
+  "files": [
+    ".json",
+    ".webp"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "698bc80e-dc89-443e-b965-0d3c80187eb7@6c48a",
+      "displayName": "EnchantedInn_logo",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "698bc80e-dc89-443e-b965-0d3c80187eb7",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "698bc80e-dc89-443e-b965-0d3c80187eb7@f9941",
+      "displayName": "EnchantedInn_logo",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": -9,
+        "offsetY": 121.5,
+        "trimX": 15,
+        "trimY": 214,
+        "width": 976,
+        "height": 865,
+        "rawWidth": 1024,
+        "rawHeight": 1536,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -488,
+            -432.5,
+            0,
+            488,
+            -432.5,
+            0,
+            -488,
+            432.5,
+            0,
+            488,
+            432.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            15,
+            1322,
+            991,
+            1322,
+            15,
+            457,
+            991,
+            457
+          ],
+          "nuv": [
+            0.0146484375,
+            0.2975260416666667,
+            0.9677734375,
+            0.2975260416666667,
+            0.0146484375,
+            0.8606770833333334,
+            0.9677734375,
+            0.8606770833333334
+          ],
+          "minPos": [
+            -488,
+            -432.5,
+            0
+          ],
+          "maxPos": [
+            488,
+            432.5,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "698bc80e-dc89-443e-b965-0d3c80187eb7@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "hasAlpha": true,
+    "fixAlphaTransparencyArtifacts": false,
+    "redirect": "698bc80e-dc89-443e-b965-0d3c80187eb7@6c48a"
+  }
+}

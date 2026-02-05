@@ -12,7 +12,6 @@ export class TableTransition extends Component {
     private _originalScales: Map<string, Vec3> = new Map();
 
     onLoad() {
-        // Store the exact scale values from the Inspector
         if (this.fixedLeft) this._originalScales.set('left', this.fixedLeft.getScale().clone());
         if (this.fixedRight) this._originalScales.set('right', this.fixedRight.getScale().clone());
         if (this.fixedBottom) this._originalScales.set('bottom', this.fixedBottom.getScale().clone());
@@ -34,19 +33,19 @@ export class TableTransition extends Component {
     private playSequentialBroken(onComplete: Function) {
         if (!this.brokenGroup) return;
         const children = this.brokenGroup.children;
-        const staggerDelay = 0.45; 
-        const fadeDuration = 0.55;
+        const staggerDelay = 0.2; // Faster stagger for a snappier feel
+        const animDuration = 0.5;
 
         children.forEach((child, index) => {
-            const sprites = child.getComponentsInChildren(Sprite);
+            // Calculate a "pop down" position (current Y - 50 units)
+            const popDownPos = new Vec3(child.position.x, child.position.y - 50, 0);
+
             tween(child)
                 .delay(index * staggerDelay)
-                .call(() => {
-                    sprites.forEach(s => {
-                        tween(s).to(fadeDuration, { color: new Color(255, 255, 255, 0) }).start();
-                    });
-                })
-                .to(fadeDuration, { scale: Vec3.ZERO }, { easing: 'backIn' })
+                .to(animDuration, { 
+                    scale: Vec3.ZERO, 
+                    position: popDownPos 
+                }, { easing: 'backIn' }) // backIn gives that "recoil" before vanishing
                 .call(() => {
                     child.active = false;
                     if (index === children.length - 1) onComplete();
@@ -72,30 +71,19 @@ export class TableTransition extends Component {
     private slideInBottom() {
         if (!this.fixedBottom || !this.bottomSlideInPos) return;
 
-        // Ensure the node is active before we try to move it
         this.fixedBottom.active = true;
-        
-        // Retain Inspector scale
         const targetScale = this._originalScales.get('bottom') || Vec3.ONE;
         this.fixedBottom.setScale(targetScale);
 
-        // Movement: From current position to the 'ghost' node position
         const destination = this.bottomSlideInPos.position.clone();
 
         const sprite = this.fixedBottom.getComponent(Sprite);
         if (sprite) {
-            sprite.color = new Color(255, 255, 255, 0);
-            tween(sprite).to(0.4, { color: Color.WHITE }).start();
+            sprite.color = Color.WHITE.clone(); // Ensure it's fully opaque
         }
 
-        // The Slide Animation
         tween(this.fixedBottom)
-            .to(1.0, { position: destination }, { 
-                easing: 'sineOut',
-                onUpdate: (target: Node) => {
-                    // Optional: Ensures no frame-skipping on activation
-                }
-            })
+            .to(1.0, { position: destination }, { easing: 'sineOut' })
             .start();
     }
 }
