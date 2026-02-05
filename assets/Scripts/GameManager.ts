@@ -24,8 +24,12 @@ export class GameManager extends Component {
     public currentStepIndex: number = 0;
     public gameStarted: boolean = false;
 
-    @property(Node) allasseShiver: Node = null!;
+    // --- CHARACTER STATE PROPERTIES ---
+    @property(Node) allasseShiverHigh: Node = null!;
+    @property(Node) allasseShiverLow: Node = null!;
     @property(Node) allasseHappy: Node = null!;
+
+    // Nymera only has two states
     @property(Node) nymeraShiver: Node = null!;
     @property(Node) nymeraHappy: Node = null!;
 
@@ -44,11 +48,12 @@ export class GameManager extends Component {
 
     onLoad() {
         this.setGridVisibility(false);
-        this.toggleCharacterState(this.allasseHappy, false);
-        this.toggleCharacterState(this.nymeraHappy, false);
+        
+        // Initial State: High cold
+        this.updateCharacterVisuals("HIGH");
+
         if (this.bgWinter) this.bgWinter.active = true;
         
-        // Hide fixed elements initially
         [this.fixedFloor, this.fixedWindows, this.fixedFireplace].forEach(n => {
             if(n) n.active = false;
         });
@@ -57,6 +62,15 @@ export class GameManager extends Component {
             this.decisionUINode.on('DECISION_HELP', this.onStartGame, this);
             this.decisionUINode.on('DECISION_LEAVE', this.onFastForwardToVictory, this);
         }
+    }
+
+    public clearHints() {
+        this.occupancy.forEach(node => {
+            if (node && node.isValid) {
+                const item = node.getComponent(MergeItem);
+                if (item) item.stopHint();
+            }
+        });
     }
 
     private onStartGame() { this.gameStarted = true; }
@@ -155,18 +169,33 @@ export class GameManager extends Component {
 
     private executeTransition(stepIndex: number) {
         switch(stepIndex) {
-            case 0: 
+            case 0: // Trash Cleared
                 this.fadeInNode(this.fixedFloor);
                 break;
-            case 1: 
+            case 1: // Windows Fixed
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
-                this.stopSnowEffect(); 
+                this.stopSnowEffect();
+                // Allasse goes to low shiver, Nymera stays shivering
+                this.updateCharacterVisuals("LOW"); 
                 if (this.tableTransition) this.tableTransition.playTransition();
                 break;
-            case 2: 
+            case 2: // Fireplace Fixed
                 this.fadeNodes(this.brokenFireplace, this.fixedFireplace); 
                 break;
         }
+    }
+
+    private updateCharacterVisuals(state: "HIGH" | "LOW" | "HAPPY") {
+        // Allasse logic (3 states)
+        if (this.allasseShiverHigh) this.allasseShiverHigh.active = (state === "HIGH");
+        if (this.allasseShiverLow) this.allasseShiverLow.active = (state === "LOW");
+        if (this.allasseHappy) this.allasseHappy.active = (state === "HAPPY");
+
+        // Nymera logic (2 states)
+        // She only becomes HAPPY at the very end. Otherwise, she is SHIVERING.
+        const isGameFinished = (state === "HAPPY");
+        if (this.nymeraShiver) this.nymeraShiver.active = !isGameFinished;
+        if (this.nymeraHappy) this.nymeraHappy.active = isGameFinished;
     }
 
     private fadeInNode(node: Node) {
@@ -208,16 +237,12 @@ export class GameManager extends Component {
 
     private celebrateCompletion() {
         this.scheduleOnce(() => {
-            this.toggleCharacterState(this.allasseShiver, false);
-            this.toggleCharacterState(this.nymeraShiver, false);
-            this.toggleCharacterState(this.allasseHappy, true);
-            this.toggleCharacterState(this.nymeraHappy, true);
+            // Final Stage: Both become HAPPY
+            this.updateCharacterVisuals("HAPPY");
             if (this.victoryScreen) this.victoryScreen.show();
         }, 1.0);
     }
 
-    private toggleCharacterState(node: Node, active: boolean) { if (node) node.active = active; }
-    public clearHints() {} 
     public getNearestSlot(worldPos: Vec3): number {
         let nearestIdx = -1; let minDist = 150;
         this.slots.forEach((slot, idx) => {
