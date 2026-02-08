@@ -7,22 +7,25 @@
       "embeddedPlayerGroups": []
     },
     "_native": "",
-    "sample": 30,
+    "sample": 45,
     "speed": 1,
     "wrapMode": 1,
     "enableTrsBlending": false,
-    "_duration": 0.9,
+    "_duration": 0.6,
     "_hash": 500763545,
     "_tracks": [
       {
         "__id__": 1
+      },
+      {
+        "__id__": 6
       }
     ],
     "_exoticAnimation": null,
     "_events": [],
     "_embeddedPlayers": [],
     "_additiveSettings": {
-      "__id__": 6
+      "__id__": 13
     },
     "_auxiliaryCurveEntries": []
   },
@@ -62,78 +65,264 @@
     "__type__": "cc.ObjectCurve",
     "_times": [
       0,
+      0.022222222222222223,
+      0.044444444444444446,
       0.06666666666666667,
+      0.08888888888888889,
+      0.1111111111111111,
       0.13333333333333333,
+      0.15555555555555556,
+      0.17777777777777778,
       0.2,
+      0.2222222222222222,
+      0.24444444444444444,
       0.26666666666666666,
+      0.28888888888888886,
+      0.3111111111111111,
       0.3333333333333333,
+      0.35555555555555557,
+      0.37777777777777777,
       0.4,
+      0.4222222222222222,
+      0.4444444444444444,
       0.4666666666666667,
+      0.4888888888888889,
+      0.5111111111111111,
       0.5333333333333333,
-      0.6,
-      0.6666666666666666,
-      0.7333333333333333,
-      0.8,
-      0.8666666666666667
+      0.5555555555555556,
+      0.5777777777777777
     ],
     "_values": [
       {
-        "__uuid__": "5bb94674-21e2-4eb8-a9cb-4ea44b0ef577@f9941",
+        "__uuid__": "3009e437-a83d-481d-a0ff-008eaa2ee1f9@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "78b13b22-ea3d-4009-989d-6cee504f3b3e@f9941",
+        "__uuid__": "838d5838-b0f8-45a9-aece-cd3d76390d39@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "d5869b97-34a6-4a9b-b72c-43531d867226@f9941",
+        "__uuid__": "c764773e-90e5-44bd-a9d4-90aafb1677ae@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "f87fbb57-0510-451c-be9e-b9996f3f9aea@f9941",
+        "__uuid__": "89c3f80e-179f-4c84-a8f1-00ab4c422fa2@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "24324c8f-3253-4b4b-bbda-d79435b15323@f9941",
+        "__uuid__": "ca524e60-a018-4fad-ab7e-43fbe15c199f@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "a5f151d1-00b6-4408-9f98-c1b3cca0e98c@f9941",
+        "__uuid__": "f9f39fa3-a3f7-40da-9a30-6c74e691230f@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "2b591f0c-39eb-4610-8a3a-25b41a651444@f9941",
+        "__uuid__": "1653a896-ac27-45d0-a295-eb792062aa78@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "7389a861-621c-48b8-bc86-760a8beb83bf@f9941",
+        "__uuid__": "2ca2fecd-d41e-4c40-b280-87bfd778b274@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "d27ad392-1530-4a38-8e29-57daa4c91f43@f9941",
+        "__uuid__": "cec85f40-846d-4c58-a9ce-baa3c459abb5@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "f64f3945-e4d4-4b3d-9af2-1f6497285dd7@f9941",
+        "__uuid__": "1dd4e4a8-20d9-4a98-81c4-4865bc58e6fe@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "4cf7eb2f-fdf6-4248-856b-79699fbc7516@f9941",
+        "__uuid__": "893cf96a-8e83-4151-8e4d-aaa51746c1a8@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "21705175-2610-493d-8b1f-8ecf50275056@f9941",
+        "__uuid__": "c29f8b88-c8e3-47a4-b45c-1ddc6c370d19@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "3364de0b-0186-4c5b-8cf4-1d05e887a9c0@f9941",
+        "__uuid__": "f418dc5b-06f8-41ff-8129-65b1dde565ea@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "d6507652-3242-4642-a134-d3306d0720db@f9941",
+        "__uuid__": "de230ff8-58a8-465a-96d4-bee436f92c48@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "d36d9bf9-2f3d-45cb-b7dc-5dbf44dcb547@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "d4eaf40a-bc88-449d-8576-71e4bfd21562@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "bd41154b-f836-4c2d-b84a-27fb45256b60@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "255fa35c-590d-42dd-bb7a-16301ec9eb34@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "61073188-ba42-49e7-9aa3-70e7c74e3df9@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "0479da01-ac69-4a4c-8164-9a21574e74b9@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "d95b3ca9-c78b-428c-b849-c81cab647476@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "920ce8a4-39f4-4ec6-bb84-bdefd4bfd534@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "d312af49-1603-4e89-bc31-72c1fb1bd4bc@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "40520332-1c77-4b0d-b4e4-c69c64bd834f@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "5642ddbc-5c51-4a0a-8ddb-13bae76a8931@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "885693f9-d0fe-4eab-a873-77bf302d8af4@f9941",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "76bbf785-44c2-4562-b074-a280109f3c3e@f9941",
         "__expectedType__": "cc.SpriteFrame"
       }
     ]
+  },
+  {
+    "__type__": "cc.animation.SizeTrack",
+    "_binding": {
+      "__type__": "cc.animation.TrackBinding",
+      "path": {
+        "__id__": 7
+      },
+      "proxy": null
+    },
+    "_channels": [
+      {
+        "__id__": 9
+      },
+      {
+        "__id__": 11
+      }
+    ]
+  },
+  {
+    "__type__": "cc.animation.TrackPath",
+    "_paths": [
+      {
+        "__id__": 8
+      },
+      "contentSize"
+    ]
+  },
+  {
+    "__type__": "cc.animation.ComponentPath",
+    "component": "cc.UITransform"
+  },
+  {
+    "__type__": "cc.animation.Channel",
+    "_curve": {
+      "__id__": 10
+    }
+  },
+  {
+    "__type__": "cc.RealCurve",
+    "_times": [
+      0,
+      0.5777778029441833
+    ],
+    "_values": [
+      {
+        "__type__": "cc.RealKeyframeValue",
+        "interpolationMode": 0,
+        "tangentWeightMode": 0,
+        "value": 1500,
+        "rightTangent": 0,
+        "rightTangentWeight": 1,
+        "leftTangent": 0,
+        "leftTangentWeight": 1,
+        "easingMethod": 0,
+        "__editorExtras__": {
+          "tangentMode": 0
+        }
+      },
+      {
+        "__type__": "cc.RealKeyframeValue",
+        "interpolationMode": 0,
+        "tangentWeightMode": 0,
+        "value": 1500,
+        "rightTangent": 0,
+        "rightTangentWeight": 1,
+        "leftTangent": 0,
+        "leftTangentWeight": 1,
+        "easingMethod": 0,
+        "__editorExtras__": {
+          "tangentMode": 0
+        }
+      }
+    ],
+    "preExtrapolation": 1,
+    "postExtrapolation": 1
+  },
+  {
+    "__type__": "cc.animation.Channel",
+    "_curve": {
+      "__id__": 12
+    }
+  },
+  {
+    "__type__": "cc.RealCurve",
+    "_times": [
+      0,
+      0.5777778029441833
+    ],
+    "_values": [
+      {
+        "__type__": "cc.RealKeyframeValue",
+        "interpolationMode": 0,
+        "tangentWeightMode": 0,
+        "value": 1080,
+        "rightTangent": 0,
+        "rightTangentWeight": 1,
+        "leftTangent": 0,
+        "leftTangentWeight": 1,
+        "easingMethod": 0,
+        "__editorExtras__": {
+          "tangentMode": 0
+        }
+      },
+      {
+        "__type__": "cc.RealKeyframeValue",
+        "interpolationMode": 0,
+        "tangentWeightMode": 0,
+        "value": 1080,
+        "rightTangent": 0,
+        "rightTangentWeight": 1,
+        "leftTangent": 0,
+        "leftTangentWeight": 1,
+        "easingMethod": 0,
+        "__editorExtras__": {
+          "tangentMode": 0
+        }
+      }
+    ],
+    "preExtrapolation": 1,
+    "postExtrapolation": 1
   },
   {
     "__type__": "cc.AnimationClipAdditiveSettings",
