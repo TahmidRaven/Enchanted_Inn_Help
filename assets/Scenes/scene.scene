@@ -218,7 +218,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 960,
+    "_orthoHeight": 959.9999999999999,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -916,7 +916,7 @@
       "__id__": 18
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 24
@@ -1719,7 +1719,7 @@
     },
     "_type": 0,
     "_fillType": 0,
-    "_sizeMode": 1,
+    "_sizeMode": 0,
     "_fillCenter": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -2580,8 +2580,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 720,
-      "height": 1280
+      "width": 360,
+      "height": 640
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2611,7 +2611,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "5aa3ca6c-d58c-4b2b-892d-44caa95f7cf3@f9941",
+      "__uuid__": "c1e08533-b842-43f5-9bdf-3f7ed5aae678@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,

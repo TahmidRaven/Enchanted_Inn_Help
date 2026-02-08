@@ -187,14 +187,14 @@ private playFireplaceSequence() {
     this.dragonNode.active = true;
     this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
 
-    // 1. Dragon Fades In
+
     tween(this.getOpacityComp(this.dragonNode))
         .to(0.5, { opacity: 255 })
         .delay(0.65) // Length of dragon animation
         .call(() => {
-            // --- TRIGGERED IMMEDIATELY AFTER DRAGON ---
+           
             
-            // A. Start Fire Transition
+            //  Fire Transition
             this.fireTransitionNode.active = true;
             this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
             

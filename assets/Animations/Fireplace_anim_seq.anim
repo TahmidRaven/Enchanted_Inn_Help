@@ -7,11 +7,11 @@
       "embeddedPlayerGroups": []
     },
     "_native": "",
-    "sample": 40,
+    "sample": 30,
     "speed": 0.75,
     "wrapMode": 2,
     "enableTrsBlending": false,
-    "_duration": 0.425,
+    "_duration": 0.16666666666666666,
     "_hash": 500763545,
     "_tracks": [
       {
@@ -65,50 +65,30 @@
     "__type__": "cc.ObjectCurve",
     "_times": [
       0,
-      0.05,
+      0.03333333333333333,
+      0.06666666666666667,
       0.1,
-      0.15,
-      0.2,
-      0.25,
-      0.3,
-      0.35,
-      0.4
+      0.13333333333333333
     ],
     "_values": [
       {
-        "__uuid__": "1817fad4-b304-4b16-8880-1f506d8ee8a7@f9941",
+        "__uuid__": "96d12850-fbb8-459c-bf73-5aec1c3912ee@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "631a4ed7-1437-4cb9-80e9-4892f634d92f@f9941",
+        "__uuid__": "c3785bd4-4b2a-473e-b6c4-61f5ea4cd237@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "cedba4d5-d661-4b56-b0ab-7bfea221d544@f9941",
+        "__uuid__": "ed66f3c2-ee82-4930-8d8a-2e683a2bee2b@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "3081fc51-4a87-47b3-9b1c-835c388a15bc@f9941",
+        "__uuid__": "ac0e40b1-3c8b-40c3-a1b4-adef770e8af2@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "fa3d5344-5194-4102-9368-d368801bf0f4@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "8af4f186-988c-4a31-a819-0c421be38339@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "2c322592-5811-490b-9c25-5c49c3082d53@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "1352be80-9877-417f-8155-745adc6385ab@f9941",
-        "__expectedType__": "cc.SpriteFrame"
-      },
-      {
-        "__uuid__": "7d66efe3-db03-4756-8828-98b3983ebb29@f9941",
+        "__uuid__": "0750e8b8-4eb5-4331-bd84-ec9f9cb88d98@f9941",
         "__expectedType__": "cc.SpriteFrame"
       }
     ]
@@ -154,28 +134,26 @@
     "__type__": "cc.RealCurve",
     "_times": [
       0,
-      0.4
+      0.13333334028720856
     ],
     "_values": [
       {
         "__type__": "cc.RealKeyframeValue",
         "interpolationMode": 0,
         "tangentWeightMode": 0,
-        "value": 2868,
+        "value": 2866,
         "rightTangent": 0,
         "rightTangentWeight": 1,
         "leftTangent": 0,
         "leftTangentWeight": 1,
         "easingMethod": 0,
-        "__editorExtras__": {
-          "tangentMode": 0
-        }
+        "__editorExtras__": null
       },
       {
         "__type__": "cc.RealKeyframeValue",
         "interpolationMode": 0,
         "tangentWeightMode": 0,
-        "value": 2868,
+        "value": 2866,
         "rightTangent": 0,
         "rightTangentWeight": 1,
         "leftTangent": 0,
@@ -199,28 +177,26 @@
     "__type__": "cc.RealCurve",
     "_times": [
       0,
-      0.4
+      0.13333334028720856
     ],
     "_values": [
       {
         "__type__": "cc.RealKeyframeValue",
         "interpolationMode": 0,
         "tangentWeightMode": 0,
-        "value": 2868,
+        "value": 2866,
         "rightTangent": 0,
         "rightTangentWeight": 1,
         "leftTangent": 0,
         "leftTangentWeight": 1,
         "easingMethod": 0,
-        "__editorExtras__": {
-          "tangentMode": 0
-        }
+        "__editorExtras__": null
       },
       {
         "__type__": "cc.RealKeyframeValue",
         "interpolationMode": 0,
         "tangentWeightMode": 0,
-        "value": 2868,
+        "value": 2866,
         "rightTangent": 0,
         "rightTangentWeight": 1,
         "leftTangent": 0,
