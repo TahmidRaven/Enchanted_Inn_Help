@@ -2113,8 +2113,14 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "brokenGroup": {
-      "__id__": 29
+    "t1": {
+      "__id__": 30
+    },
+    "t2": {
+      "__id__": 33
+    },
+    "t3": {
+      "__id__": 36
     },
     "fixedLeft": {
       "__id__": 42
@@ -2128,6 +2134,7 @@
     "bottomSlideInPos": {
       "__id__": 51
     },
+    "timeScale": 0.7,
     "_id": "eaGBa2NUtMP5VLbQTGFlB2"
   },
   {
