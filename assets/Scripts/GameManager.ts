@@ -172,51 +172,70 @@ export class GameManager extends Component {
         }
     }
 
-    private playFireplaceSequence() {
-        if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
-            this.currentStepIndex = 3;
-            this.checkCelebration();
-            return;
-        }
-
-        this.setNodeOpacity(this.dragonNode, 0);
-        this.setNodeOpacity(this.fireTransitionNode, 0);
-        this.setNodeOpacity(this.fireplaceFixedAnimSeq, 0);
-
-        this.dragonNode.active = true;
-        this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
-
-        tween(this.getOpacityComp(this.dragonNode))
-            .to(0.5, { opacity: 255 })
-            .delay(1.0)
-            .call(() => {
-                this.fireTransitionNode.active = true;
-                this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
-                tween(this.getOpacityComp(this.dragonNode)).to(0.3, { opacity: 0 }).call(() => this.dragonNode.active = false).start();
-                tween(this.getOpacityComp(this.fireTransitionNode)).to(0.3, { opacity: 255 }).start();
-            })
-            .delay(1.2)
-            .call(() => {
-                // ---Fade out TableTransition when fireplace sequence finishes ---
-                if (this.tableTransition) {
-                    tween(this.getOpacityComp(this.tableTransition.node))
-                        .to(0.5, { opacity: 0 })
-                        .call(() => { this.tableTransition.node.active = false; })
-                        .start();
-                }
-
-                this.fireplaceFixedAnimSeq.active = true;
-                tween(this.getOpacityComp(this.fireTransitionNode)).to(0.5, { opacity: 0 }).call(() => this.fireTransitionNode.active = false).start();
-                tween(this.getOpacityComp(this.fireplaceFixedAnimSeq)).to(0.5, { opacity: 255 }).start();
-            })
-            .delay(0.5) 
-            .call(() => {
-                this.currentStepIndex = 3;
-                this.updateCharacterVisuals("HAPPY"); 
-                this.checkCelebration();
-            })
-            .start();
+private playFireplaceSequence() {
+    if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
+        this.currentStepIndex = 3;
+        this.checkCelebration();
+        return;
     }
+
+    // Reset states
+    this.setNodeOpacity(this.dragonNode, 0);
+    this.setNodeOpacity(this.fireTransitionNode, 0);
+    this.setNodeOpacity(this.fireplaceFixedAnimSeq, 0);
+
+    this.dragonNode.active = true;
+    this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
+
+    // 1. Dragon Fades In
+    tween(this.getOpacityComp(this.dragonNode))
+        .to(0.5, { opacity: 255 })
+        .delay(0.65) // Length of dragon animation
+        .call(() => {
+            // --- TRIGGERED IMMEDIATELY AFTER DRAGON ---
+            
+            // A. Start Fire Transition
+            this.fireTransitionNode.active = true;
+            this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
+            
+            tween(this.getOpacityComp(this.dragonNode))
+                .to(0.3, { opacity: 0 })
+                .call(() => this.dragonNode.active = false)
+                .start();
+
+            tween(this.getOpacityComp(this.fireTransitionNode))
+                .to(0.3, { opacity: 255 })
+                .start();
+
+            // Fix Fireplace (Parallel to Fire Transition)
+            this.fireplaceFixedAnimSeq.active = true;
+            tween(this.getOpacityComp(this.fireplaceFixedAnimSeq))
+                .to(0.5, { opacity: 255 })
+                .start();
+
+            // Fade out Table
+            if (this.tableTransition) {
+                tween(this.getOpacityComp(this.tableTransition.node))
+                    .to(0.5, { opacity: 0 })
+                    .call(() => { this.tableTransition.node.active = false; })
+                    .start();
+            }
+        })
+        .delay(0.5) // Small buffer for the visual "burst" to finish
+        .call(() => {
+        
+            tween(this.getOpacityComp(this.fireTransitionNode))
+                .to(0.5, { opacity: 0 })
+                .call(() => {
+                    this.fireTransitionNode.active = false;
+                    this.currentStepIndex = 3;
+                    this.updateCharacterVisuals("HAPPY"); 
+                    this.checkCelebration();
+                })
+                .start();
+        })
+        .start();
+}
 
     private getOpacityComp(node: Node): UIOpacity {
         let comp = node.getComponent(UIOpacity);
