@@ -3219,8 +3219,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 1364,
-      "height": 768
+      "width": 385,
+      "height": 320
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -3249,10 +3249,7 @@
       "b": 255,
       "a": 255
     },
-    "_spriteFrame": {
-      "__uuid__": "022c9761-07e9-44f2-8500-8c70133c8df2@f9941",
-      "__expectedType__": "cc.SpriteFrame"
-    },
+    "_spriteFrame": null,
     "_type": 0,
     "_fillType": 0,
     "_sizeMode": 1,
@@ -3281,12 +3278,12 @@
     "playOnLoad": true,
     "_clips": [
       {
-        "__uuid__": "5e62f31e-5364-4272-8b3b-f144d3de606d",
+        "__uuid__": "6aa875bb-18c6-4472-aba3-89b31c65dfde",
         "__expectedType__": "cc.AnimationClip"
       }
     ],
     "_defaultClip": {
-      "__uuid__": "5e62f31e-5364-4272-8b3b-f144d3de606d",
+      "__uuid__": "6aa875bb-18c6-4472-aba3-89b31c65dfde",
       "__expectedType__": "cc.AnimationClip"
     },
     "_id": "84I5LpgKRJTJqI9vv+gCin"
