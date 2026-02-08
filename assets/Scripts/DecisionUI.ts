@@ -15,8 +15,8 @@ export class DecisionUI extends Component {
     }
 
     private setupButtons() {
-        this.animateButton(this.helpButton, 1.1, 0.8);
-        this.animateButton(this.leaveButton, 1.05, 0.9);
+        this.animateButton(this.helpButton, 1.25, 1.25);
+        this.animateButton(this.leaveButton, 1.25, 1.25);
 
         this.helpButton.on(Node.EventType.TOUCH_END, this.onHelpClicked, this);
         this.leaveButton.on(Node.EventType.TOUCH_END, this.onLeaveClicked, this);

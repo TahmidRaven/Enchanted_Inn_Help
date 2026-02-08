@@ -190,7 +190,7 @@ private playFireplaceSequence() {
     // 1. Dragon Fades In
     tween(this.getOpacityComp(this.dragonNode))
         .to(0.5, { opacity: 255 })
-        .delay(0.65) // Length of dragon animation
+        .delay(0.75) // Length of dragon animation
         .call(() => {
             // --- TRIGGERED IMMEDIATELY AFTER DRAGON ---
             
