@@ -15,15 +15,18 @@ export class DecisionUI extends Component {
     }
 
     private setupButtons() {
-        this.animateButton(this.helpButton, 1.15, 1.15);
-        this.animateButton(this.leaveButton, 1.15, 1.15);
+        this.animateButton(this.helpButton, 1.15, 1.15, 0);
+        
+        this.animateButton(this.leaveButton, 1.15, 1.15, 0.6);
 
         this.helpButton.on(Node.EventType.TOUCH_END, this.onHelpClicked, this);
         this.leaveButton.on(Node.EventType.TOUCH_END, this.onLeaveClicked, this);
     }
 
-    private animateButton(node: Node, scale: number, duration: number) {
+
+    private animateButton(node: Node, scale: number, duration: number, delay: number) {
         tween(node)
+            .delay(delay) 
             .to(duration, { scale: new Vec3(scale, scale, 1) }, { easing: 'sineInOut' })
             .to(duration, { scale: Vec3.ONE }, { easing: 'sineInOut' })
             .union()
@@ -44,7 +47,6 @@ export class DecisionUI extends Component {
         });
     }
 
-
     public hide(onComplete?: Function) {
         if (this.opacity) {
             tween(this.opacity)
@@ -55,7 +57,6 @@ export class DecisionUI extends Component {
                 })
                 .start();
         } else {
-
             this.node.active = false;
             if (onComplete) onComplete();
         }
