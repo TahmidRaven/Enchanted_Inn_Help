@@ -3011,8 +3011,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 286,
-      "height": 176
+      "width": 572,
+      "height": 352
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -3173,7 +3173,10 @@
       "b": 255,
       "a": 255
     },
-    "_spriteFrame": null,
+    "_spriteFrame": {
+      "__uuid__": "2657dfc4-fa29-4551-b94e-110dbc79e74f@f9941",
+      "__expectedType__": "cc.SpriteFrame"
+    },
     "_type": 0,
     "_fillType": 0,
     "_sizeMode": 0,
