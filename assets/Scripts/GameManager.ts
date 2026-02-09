@@ -237,14 +237,17 @@ public spawnFromSpawner(prefabIndex: number) {
             case 1: // Windows Fixed + TABLE TRANSITION
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect();
-                this.updateCharacterVisuals("LOW"); 
+                this.updateCharacterVisuals("LOW");
 
                 if (this.tableTransition) {
-                    this.tableTransition.playTransition();
+                    this.tableTransition.playTransition(() => {
+                        this.currentStepIndex = 2; 
+                        this.checkCelebration();
+                    });
+                } else {
+                    this.currentStepIndex = 2;
+                    this.checkCelebration();
                 }
-
-                this.currentStepIndex = 2;
-                this.checkCelebration();
                 break;
             case 2: // Fireplace Transition
                 this.playFireplaceSequence();

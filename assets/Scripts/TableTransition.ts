@@ -56,25 +56,16 @@ export class TableTransition extends Component {
         return seconds * this.timeScale;
     }
 
-    public playTransition() {
-        if (!this.t1 || !this.t2 || !this.t3) {
-            console.warn("TableTransition: Missing broken piece nodes!");
-            return;
-        }
+    public playTransition(onComplete?: Function) {
+        if (!this.t1 || !this.t2 || !this.t3) return;
 
-        // 1. T3 goes first
         this.animateBrokenOut(this.t3, () => {
-            
-            // 2. T2 starts when T3 finishes
             this.animateBrokenOut(this.t2, () => {
-                
-                // 3. Right table starts AND T1 starts
                 this.popIn(this.fixedRight, 'right');
-                
                 this.animateBrokenOut(this.t1, () => {
-                    // 4. T1 finished -> Left table and Bottom table start
                     this.popIn(this.fixedLeft, 'left');
-                    this.slideInBottom();
+                    // Pass the callback to the final piece's animation
+                    this.slideInBottom(onComplete); 
                 });
             });
         });
@@ -110,7 +101,7 @@ export class TableTransition extends Component {
             .start();
     }
 
-    private slideInBottom() {
+    private slideInBottom(onAllFinished?: Function) {
         if (!this.fixedBottom || !this.bottomSlideInPos) return;
 
         this.fixedBottom.active = true;
@@ -119,8 +110,9 @@ export class TableTransition extends Component {
         tween(this.fixedBottom)
             .to(this.d(0.8), { position: this.bottomSlideInPos.position }, { easing: 'sineOut' })
             .call(() => {
-                // Spawn candle after sliding is done
                 this.spawnCandleAtNode(this.fixedBottom);
+                // 2. Trigger the callback here!
+                if (onAllFinished) onAllFinished();
             })
             .start();
     }
