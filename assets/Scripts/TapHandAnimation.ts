@@ -1,110 +1,73 @@
-import { _decorator, Component, Node, tween, Tween, UIOpacity, UITransform, Vec3, Sprite, SpriteFrame } from 'cc';
+import { _decorator, Component, Node, tween, Tween, UIOpacity, UITransform, Vec3 } from 'cc';
 const { ccclass, property, requireComponent } = _decorator;
 
 @ccclass('TapHandAnimation')
 @requireComponent(UIOpacity)
-@requireComponent(Sprite)
 export class TapHandAnimation extends Component {
 
     @property({ type: Node, tooltip: "The node you want the hand to tap on" })
     targetNode: Node = null!;
 
-    @property({ type: Node, tooltip: "Clicking this node will dismiss the tap animation" })
-    dismissButton: Node = null!;
-
-    @property({ type: SpriteFrame, tooltip: "The sprite for the hand in its normal/idle state" })
-    idleSprite: SpriteFrame = null!;
-
-    @property({ type: SpriteFrame, tooltip: "The sprite for the hand when it is pressing down" })
-    pressedSprite: SpriteFrame = null!;
-
     private _uiOpacity: UIOpacity | null = null;
-    private _sprite: Sprite = null!;
-    private _originalScale: Vec3 = new Vec3(1, 1, 1);
+    private _initialScale: Vec3 = new Vec3();
+    private _initialAngle: number = 0;
 
     onLoad() {
-        if (this.dismissButton) {
-            this.dismissButton.on(Node.EventType.TOUCH_END, this.dismiss, this);
-        }
+        this._uiOpacity = this.getComponent(UIOpacity);
+        
+        // Capture the exact values from your Inspector
+        this._initialScale = this.node.scale.clone();
+        this._initialAngle = this.node.angle;
     }
 
     onEnable() {
         this.play();
     }
 
-    onDisable() {
-        Tween.stopAllByTarget(this.node);
-        if (this._uiOpacity) Tween.stopAllByTarget(this._uiOpacity);
-        
-        if (this.dismissButton) {
-            this.dismissButton.off(Node.EventType.TOUCH_END, this.dismiss, this);
-        }
-    }
-
     play() {
-        if (!this.targetNode) {
-            console.error("[TapHand] MISSING TARGET: Please assign a TargetNode in the Inspector.");
-            return;
-        }
+        if (!this.targetNode) return;
 
-        this._uiOpacity = this.getComponent(UIOpacity);
-        this._sprite = this.getComponent(Sprite)!;
-        
-        if (this._uiOpacity) this._uiOpacity.opacity = 255;
-        if (this.idleSprite) this._sprite.spriteFrame = this.idleSprite;
-
-        this._originalScale = this.node.scale.clone();
+        this.stopAllAnimations();
 
         // --- POSITIONING ---
         const parentTrans = this.node.parent?.getComponent(UITransform);
-        if (!parentTrans) return;
+        if (parentTrans) {
+            const targetWorldPos = this.targetNode.getWorldPosition();
+            const localPos = parentTrans.convertToNodeSpaceAR(targetWorldPos);
+            this.node.setPosition(localPos);
+        }
 
-        const targetWorldPos = this.targetNode.getWorldPosition();
-        const localPos = parentTrans.convertToNodeSpaceAR(targetWorldPos);
-        this.node.setPosition(localPos);
+        if (this._uiOpacity) this._uiOpacity.opacity = 255;
 
-        // --- TAP ANIMATION ---
-        Tween.stopAllByTarget(this.node);
+        // --- CONTINUOUS JUICY ANIMATION ---
+        const squeezeScale = new Vec3(this._initialScale.x * 1.1, this._initialScale.y * 0.9, 1);
+        const tapScale = new Vec3(this._initialScale.x * 0.8, this._initialScale.y * 0.8, 1);
+        const tapAngle = this._initialAngle - 12; // Tilt relative to 15.9
 
-        const tapScale = new Vec3(
-            this._originalScale.x * 1.2, 
-            this._originalScale.y * 1.2, 
-            this._originalScale.z
-        );
-
-        tween(this.node as Node)
-            .to(0.3, { scale: tapScale }, { 
-                easing: 'sineOut',
-                onStart: () => {
-                    if (this.pressedSprite) this._sprite.spriteFrame = this.pressedSprite;
-                }
-            })
-            .to(0.2, { scale: this._originalScale }, { 
-                easing: 'sineIn',
-                onComplete: () => {
-                    if (this.idleSprite) this._sprite.spriteFrame = this.idleSprite;
-                }
-            })
-            .delay(0.6)
-            .union()
-            .repeatForever()
+        tween(this.node)
+            .repeatForever(
+                tween()
+                    // 1. Anticipation: Slight squeeze
+                    .to(0.3, { scale: squeezeScale }, { easing: 'sineOut' })
+                    
+                    // 2. Action: Quick snappy tap
+                    .to(0.1, { scale: tapScale, angle: tapAngle }, { easing: 'quadIn' })
+                    
+                    // 3. Recovery: Bounce back to base state
+                    .to(0.25, { scale: this._initialScale, angle: this._initialAngle }, { easing: 'backOut' })
+                    
+                    // 4. Brief pause before repeating the tap
+                    .delay(0.4)
+            )
             .start();
     }
 
-    public dismiss() {
-        if (!this._uiOpacity) this._uiOpacity = this.getComponent(UIOpacity);
-        
-        Tween.stopAllByTarget(this.node); // Stop the tapping 
-        
-        if (this._uiOpacity) {
-            tween(this._uiOpacity)
-                .to(0.4, { opacity: 0 }, { easing: 'sineOut' })
-                .call(() => {
-                    this.node.destroy(); 
-                })
-                .start();
-        } else {
-            this.node.destroy();
-        }
+    private stopAllAnimations() {
+        Tween.stopAllByTarget(this.node);
+        if (this._uiOpacity) Tween.stopAllByTarget(this._uiOpacity);
+    }
+
+    onDisable() {
+        this.stopAllAnimations();
     }
 }

@@ -147,6 +147,12 @@
     "__prefab": {
       "__id__": 7
     },
+    "gameManager": null,
+    "spawners": [
+      null,
+      null,
+      null
+    ],
     "_id": ""
   },
   {
