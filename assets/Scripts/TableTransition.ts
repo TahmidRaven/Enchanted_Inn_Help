@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, tween, Sprite, Color } from 'cc';
+import { _decorator, Component, Node, Vec3, tween, Prefab, instantiate } from 'cc';
 const { ccclass, property, menu } = _decorator;
 
 @ccclass('TableTransition')
@@ -20,6 +20,9 @@ export class TableTransition extends Component {
     fixedBottom: Node = null!;
     @property({ type: Node, group: { name: 'Fixed Pieces', displayOrder: 2 } })
     bottomSlideInPos: Node = null!;
+
+    @property({ type: Prefab, tooltip: 'The candle animation prefab to spawn' })
+    candlePrefab: Prefab = null!;
 
     @property({ tooltip: '1.0 is normal, 0.5 is 2x faster, 2.0 is 2x slower', displayOrder: 3 })
     timeScale: number = 1.0;
@@ -48,7 +51,6 @@ export class TableTransition extends Component {
             if (node) this._originalPositions.set(node, node.position.clone());
         });
     }
-
 
     private d(seconds: number): number {
         return seconds * this.timeScale;
@@ -101,6 +103,10 @@ export class TableTransition extends Component {
         
         tween(node)
             .to(this.d(0.5), { scale: targetScale }, { easing: 'backOut' })
+            .call(() => {
+                // Spawn candle after piece is fixed
+                this.spawnCandleAtNode(node);
+            })
             .start();
     }
 
@@ -112,9 +118,24 @@ export class TableTransition extends Component {
 
         tween(this.fixedBottom)
             .to(this.d(0.8), { position: this.bottomSlideInPos.position }, { easing: 'sineOut' })
+            .call(() => {
+                // Spawn candle after sliding is done
+                this.spawnCandleAtNode(this.fixedBottom);
+            })
             .start();
     }
 
+
+    private spawnCandleAtNode(parentNode: Node) {
+        if (!this.candlePrefab) return;
+
+        const anchor = parentNode.getChildByName('candleanim');
+        if (anchor) {
+            const candle = instantiate(this.candlePrefab);
+            anchor.addChild(candle);
+            candle.setPosition(Vec3.ZERO);
+        }
+    }
 
     public resetAnimation() {
         [this.t1, this.t2, this.t3].forEach(node => {
@@ -126,7 +147,12 @@ export class TableTransition extends Component {
         });
 
         [this.fixedLeft, this.fixedRight, this.fixedBottom].forEach(node => {
-            if (node) node.active = false;
+            if (node) {
+                node.active = false;
+                // Clean up spawned candles on reset
+                const anchor = node.getChildByName('candleanim');
+                if (anchor) anchor.removeAllChildren();
+            }
         });
     }
 }
