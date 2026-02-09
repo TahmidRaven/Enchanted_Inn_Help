@@ -8,10 +8,14 @@ export class TrashAnimation extends Component {
 
     private sprite: Sprite = null!;
     private originalScale: Vec3 = new Vec3(1, 1, 1);
+    private inspectorPos: Vec3 = new Vec3(); 
 
     onLoad() {
         this.sprite = this.getComponent(Sprite)!;
         this.originalScale = this.node.scale.clone();
+        // Capture the target position set in the Cocos Inspector
+        this.inspectorPos = this.node.position.clone(); 
+
         this.node.active = false;
         this.node.setScale(Vec3.ZERO);
     }
@@ -19,14 +23,49 @@ export class TrashAnimation extends Component {
     public playCleanup(items: Node[], onComplete: Function) {
         this.node.active = true;
         
+        // Ensure starting state is 0 scale at the center of the screen
+        this.node.setScale(Vec3.ZERO);
+        this.node.setPosition(Vec3.ZERO); 
+        
         if (this.emptyBinSprite) {
             this.sprite.spriteFrame = this.emptyBinSprite;
         }
-        
-        tween(this.node)
-            .to(0.5, { scale: this.originalScale }, { easing: 'backOut' })
+
+        // --- BEZIER ENTRANCE + OVERSIZE SCALE-UP ---
+        const startPos = Vec3.ZERO;
+        const targetPos = this.inspectorPos;
+        const overshootScale = this.originalScale.x * 1.2; // +20% target
+
+        // Control point for the arc height
+        const controlPoint = new Vec3(
+            (startPos.x + targetPos.x) / 2 - 100, 
+            Math.max(startPos.y, targetPos.y) + 400, 
+            0
+        );
+
+        let pathObj = { t: 0 };
+
+        tween(pathObj)
+            .to(0.7, { t: 1 }, {
+                easing: 'sineOut', 
+                onUpdate: () => {
+                    // 1. Move along the curve
+                    const currentPos = this.getBezierPoint(startPos, controlPoint, targetPos, pathObj.t);
+                    this.node.setPosition(currentPos);
+
+                    // 2. Scale from 0 to 1.2 (overshoot) during flight
+                    const currentScale = pathObj.t * overshootScale;
+                    this.node.setScale(new Vec3(currentScale, currentScale, 1));
+                }
+            })
             .call(() => {
-                this.startSequentialDrop(items, onComplete);
+                // 3. Landing: Snap from 1.2 back to 1.0 with Elastic bounce
+                tween(this.node)
+                    .to(0.5, { scale: this.originalScale }, { easing: 'elasticOut' })
+                    .call(() => {
+                        this.startSequentialDrop(items, onComplete);
+                    })
+                    .start();
             })
             .start();
     }
@@ -51,8 +90,8 @@ export class TrashAnimation extends Component {
 
             let obj = { t: 0 };
             tween(obj)
-                .delay(idx * 0.15)
-                .to(0.6, { t: 1 }, {
+                .delay(idx * 0.12)
+                .to(0.55, { t: 1 }, {
                     easing: 'quadIn',
                     onUpdate: () => {
                         if (!item.isValid) return;
@@ -63,12 +102,9 @@ export class TrashAnimation extends Component {
                 })
                 .call(() => {
                     item.active = false;
-                    this.shakeBin(5);
+                    this.shakeBin(6);
                     finishedCount++;
-
-                    if (finishedCount === items.length) {
-                        this.finalize(onComplete);
-                    }
+                    if (finishedCount === items.length) this.finalize(onComplete);
                 })
                 .start();
         });
@@ -81,20 +117,20 @@ export class TrashAnimation extends Component {
 
         tween(this.node)
             .call(() => this.shakeBin(15))
-            .delay(0.8) 
-            .to(0.5, { scale: Vec3.ZERO }, { easing: 'backIn' })
+            .delay(0.6) 
+            .to(0.4, { scale: Vec3.ZERO }, { easing: 'backIn' })
             .call(() => {
                 this.node.active = false;
-                if (onComplete) onComplete(); // Triggers progression in GameManager
+                if (onComplete) onComplete(); 
             })
             .start();
     }
 
     private shakeBin(intensity: number) {
         tween(this.node)
-            .by(0.05, { position: new Vec3(intensity, 0, 0) })
-            .by(0.05, { position: new Vec3(-intensity * 2, 0, 0) })
-            .by(0.05, { position: new Vec3(intensity, 0, 0) })
+            .by(0.04, { position: new Vec3(intensity, 0, 0) })
+            .by(0.04, { position: new Vec3(-intensity * 2, 0, 0) })
+            .by(0.04, { position: new Vec3(intensity, 0, 0) })
             .start();
     }
 
