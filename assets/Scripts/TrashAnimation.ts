@@ -13,7 +13,6 @@ export class TrashAnimation extends Component {
     onLoad() {
         this.sprite = this.getComponent(Sprite)!;
         this.originalScale = this.node.scale.clone();
-        // Capture the target position set in the Cocos Inspector
         this.inspectorPos = this.node.position.clone(); 
 
         this.node.active = false;
@@ -23,7 +22,6 @@ export class TrashAnimation extends Component {
     public playCleanup(items: Node[], onComplete: Function) {
         this.node.active = true;
         
-        // Ensure starting state is 0 scale at the center of the screen
         this.node.setScale(Vec3.ZERO);
         this.node.setPosition(Vec3.ZERO); 
         
@@ -36,7 +34,7 @@ export class TrashAnimation extends Component {
         const targetPos = this.inspectorPos;
         const overshootScale = this.originalScale.x * 1.2; // +20% target
 
-        // Control point for the arc height
+        // Control point for the arc heightx 
         const controlPoint = new Vec3(
             (startPos.x + targetPos.x) / 2 - 100, 
             Math.max(startPos.y, targetPos.y) + 400, 
@@ -49,17 +47,14 @@ export class TrashAnimation extends Component {
             .to(0.7, { t: 1 }, {
                 easing: 'sineOut', 
                 onUpdate: () => {
-                    // 1. Move along the curve
                     const currentPos = this.getBezierPoint(startPos, controlPoint, targetPos, pathObj.t);
                     this.node.setPosition(currentPos);
 
-                    // 2. Scale from 0 to 1.2 (overshoot) during flight
                     const currentScale = pathObj.t * overshootScale;
                     this.node.setScale(new Vec3(currentScale, currentScale, 1));
                 }
             })
             .call(() => {
-                // 3. Landing: Snap from 1.2 back to 1.0 with Elastic bounce
                 tween(this.node)
                     .to(0.5, { scale: this.originalScale }, { easing: 'elasticOut' })
                     .call(() => {
@@ -70,45 +65,59 @@ export class TrashAnimation extends Component {
             .start();
     }
 
-    private startSequentialDrop(items: Node[], onComplete: Function) {
-        let finishedCount = 0;
-        const targetPos = this.node.worldPosition;
+private startSequentialDrop(items: Node[], onComplete: Function) {
+    let finishedCount = 0;
+   
+    const baseTargetPos = this.node.worldPosition;
+    
+    
+    const spread = 60; 
 
-        items.forEach((item, idx) => {
-            if (!item || !item.isValid) {
+    items.forEach((item, idx) => {
+        if (!item || !item.isValid) {
+            finishedCount++;
+            if (finishedCount === items.length) this.finalize(onComplete);
+            return;
+        }
+
+        const startPos = item.worldPosition.clone();
+        
+        // --- POSITIONAL SCATTERING ---
+        const offsetX = (Math.random() - 0.5) * spread;
+        const offsetY = (Math.random() - 0.5) * (spread / 2);
+        const individualTargetPos = new Vec3(baseTargetPos.x + offsetX, baseTargetPos.y + offsetY, 0);
+
+        const controlPoint = new Vec3(
+            (startPos.x + individualTargetPos.x) / 2, 
+            Math.max(startPos.y, individualTargetPos.y) + 450, // High arc like the video
+            0
+        );
+
+        let obj = { t: 0 };
+        tween(obj)
+            .delay(idx * 0.1) // Quick sequential timing
+            .to(0.5, { t: 1 }, {
+                easing: 'quadIn',
+                onUpdate: () => {
+                    if (!item.isValid) return;
+                    
+                    item.setWorldPosition(this.getBezierPoint(startPos, controlPoint, individualTargetPos, obj.t));
+                    
+                    const s = 1 - obj.t;
+                    item.setScale(new Vec3(s, s, s));
+                    
+                
+                }
+            })
+            .call(() => {
+                item.active = false;
+                this.shakeBin(5); 
                 finishedCount++;
                 if (finishedCount === items.length) this.finalize(onComplete);
-                return;
-            }
-
-            const startPos = item.worldPosition.clone();
-            const controlPoint = new Vec3(
-                (startPos.x + targetPos.x) / 2, 
-                Math.max(startPos.y, targetPos.y) + 400, 
-                0
-            );
-
-            let obj = { t: 0 };
-            tween(obj)
-                .delay(idx * 0.12)
-                .to(0.55, { t: 1 }, {
-                    easing: 'quadIn',
-                    onUpdate: () => {
-                        if (!item.isValid) return;
-                        item.setWorldPosition(this.getBezierPoint(startPos, controlPoint, targetPos, obj.t));
-                        const s = 1 - obj.t;
-                        item.setScale(new Vec3(s, s, s));
-                    }
-                })
-                .call(() => {
-                    item.active = false;
-                    this.shakeBin(6);
-                    finishedCount++;
-                    if (finishedCount === items.length) this.finalize(onComplete);
-                })
-                .start();
-        });
-    }
+            })
+            .start();
+    });
+}
 
     private finalize(onComplete: Function) {
         if (this.fullBinSprite) {
