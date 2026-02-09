@@ -26,9 +26,6 @@ export class GameManager extends Component {
     @property(Node) fireTransitionNode: Node = null!;
     @property(Node) fireplaceFixedAnimSeq: Node = null!;
 
-    public currentStepIndex: number = 0;
-    public gameStarted: boolean = false;
-
     // --- CHARACTER VISUALS ---
     @property(Node) allasseShiverHigh: Node = null!;
     @property(Node) allasseShiverLow: Node = null!;
@@ -44,9 +41,17 @@ export class GameManager extends Component {
     @property(Node) fixedWindows: Node = null!;
     @property(Node) snowNode: Node = null!; 
 
+    // --- HINT SETTINGS ---
+    @property({ tooltip: "Seconds of inactivity before showing a merge hint" })
+    public hintInterval: number = 5.0; 
+
+    public currentStepIndex: number = 0;
+    public gameStarted: boolean = false;
+
     private occupancy: (Node | null)[] = new Array(16).fill(null); 
     private completedSteps: Set<number> = new Set();
     private readonly TOTAL_STEPS = 3; 
+    private hintTimer: number = 0;
 
     onLoad() {
         this.setGridVisibility(false);
@@ -65,6 +70,62 @@ export class GameManager extends Component {
         }
     }
 
+    update(dt: number) {
+        if (!this.gameStarted) return;
+
+        // Count up inactivity
+        this.hintTimer += dt;
+        if (this.hintTimer >= this.hintInterval) {
+            this.showMergeHint();
+            this.hintTimer = 0; 
+        }
+    }
+
+    private showMergeHint() {
+        const activeItems: MergeItem[] = [];
+        this.occupancy.forEach(node => {
+            if (node && node.isValid) {
+                const item = node.getComponent(MergeItem);
+                if (item && !item.isHinting) activeItems.push(item);
+            }
+        });
+
+        // Loop through grid to find matches
+        for (let i = 0; i < activeItems.length; i++) {
+            for (let j = i + 1; j < activeItems.length; j++) {
+                const itemA = activeItems[i];
+                const itemB = activeItems[j];
+
+                // If level and type match
+                if (itemA.level === itemB.level && itemA.prefabIndex === itemB.prefabIndex) {
+                    const posA = itemA.node.worldPosition;
+                    const posB = itemB.node.worldPosition;
+                    
+                    // Midpoint calculation: M = (A + B) / 2
+                    const mid = new Vec3(
+                        (posA.x + posB.x) / 2,
+                        (posA.y + posB.y) / 2,
+                        (posA.z + posB.z) / 2
+                    );
+
+                    itemA.playHint(mid);
+                    itemB.playHint(mid);
+                    return; // Only trigger one pair at a time
+                }
+            }
+        }
+    }
+
+    public clearHints() {
+        this.hintTimer = 0; // Reset timer on any touch
+        this.occupancy.forEach(node => {
+            if (node && node.isValid) {
+                const item = node.getComponent(MergeItem);
+                if (item) item.stopHint();
+            }
+        });
+    }
+
     private onStartGame() { this.gameStarted = true; }
     private onFastForwardToVictory() { if (this.victoryScreen) this.victoryScreen.show(); }
 
@@ -73,13 +134,33 @@ export class GameManager extends Component {
         if (this.gridVisualImage) this.gridVisualImage.active = visible;
     }
 
-    public spawnFromSpawner(prefabIndex: number) {
+public spawnFromSpawner(prefabIndex: number) {
         this.setGridVisibility(true);
+        
         const coreLevels = [0, 0, 1, 2];
         coreLevels.forEach(lvl => this.spawnItem(lvl, prefabIndex));
-        for (let i = 0; i < 3; i++) {
-            let junkIdx = (prefabIndex + 1) % this.stagePrefabs.length;
-            this.spawnItem(0, junkIdx);
+        
+        let junkPool = this.stagePrefabs
+            .map((_, idx) => idx)
+            .filter(idx => idx !== prefabIndex);
+
+        for (let i = junkPool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [junkPool[i], junkPool[j]] = [junkPool[j], junkPool[i]];
+        }
+
+        const junkLevelSet = [0, 1, 2, 3]; 
+
+        // Spawn for Junk Prefab 1
+        if (junkPool.length > 0) {
+            const junk1Idx = junkPool[0];
+            junkLevelSet.forEach(lvl => this.spawnItem(lvl, junk1Idx));
+        }
+
+        // Spawn for Junk Prefab 2
+        if (junkPool.length > 1) {
+            const junk2Idx = junkPool[1];
+            junkLevelSet.forEach(lvl => this.spawnItem(lvl, junk2Idx));
         }
     }
 
@@ -158,7 +239,6 @@ export class GameManager extends Component {
                 this.stopSnowEffect();
                 this.updateCharacterVisuals("LOW"); 
 
-                // --- TABLE TRANSITION LOGIC ---
                 if (this.tableTransition) {
                     this.tableTransition.playTransition();
                 }
@@ -172,70 +252,62 @@ export class GameManager extends Component {
         }
     }
 
-private playFireplaceSequence() {
-    if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
-        this.currentStepIndex = 3;
-        this.checkCelebration();
-        return;
-    }
+    private playFireplaceSequence() {
+        if (!this.dragonNode || !this.fireTransitionNode || !this.fireplaceFixedAnimSeq) {
+            this.currentStepIndex = 3;
+            this.checkCelebration();
+            return;
+        }
 
-    // Reset states
-    this.setNodeOpacity(this.dragonNode, 0);
-    this.setNodeOpacity(this.fireTransitionNode, 0);
-    this.setNodeOpacity(this.fireplaceFixedAnimSeq, 0);
+        this.setNodeOpacity(this.dragonNode, 0);
+        this.setNodeOpacity(this.fireTransitionNode, 0);
+        this.setNodeOpacity(this.fireplaceFixedAnimSeq, 0);
 
-    this.dragonNode.active = true;
-    this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
+        this.dragonNode.active = true;
+        this.dragonNode.setSiblingIndex(this.dragonNode.parent!.children.length - 1);
 
-
-    tween(this.getOpacityComp(this.dragonNode))
-        .to(0.5, { opacity: 255 })
-        .delay(0.65) // Length of dragon animation
-        .call(() => {
-           
-            
-            //  Fire Transition
-            this.fireTransitionNode.active = true;
-            this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
-            
-            tween(this.getOpacityComp(this.dragonNode))
-                .to(0.3, { opacity: 0 })
-                .call(() => this.dragonNode.active = false)
-                .start();
-
-            tween(this.getOpacityComp(this.fireTransitionNode))
-                .to(0.3, { opacity: 255 })
-                .start();
-
-            // Fix Fireplace (Parallel to Fire Transition)
-            this.fireplaceFixedAnimSeq.active = true;
-            tween(this.getOpacityComp(this.fireplaceFixedAnimSeq))
-                .to(0.5, { opacity: 255 })
-                .start();
-
-            // Fade out Table
-            if (this.tableTransition) {
-                tween(this.getOpacityComp(this.tableTransition.node))
-                    .to(0.5, { opacity: 0 })
-                    .call(() => { this.tableTransition.node.active = false; })
+        tween(this.getOpacityComp(this.dragonNode))
+            .to(0.5, { opacity: 255 })
+            .delay(0.65)
+            .call(() => {
+                this.fireTransitionNode.active = true;
+                this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
+                
+                tween(this.getOpacityComp(this.dragonNode))
+                    .to(0.3, { opacity: 0 })
+                    .call(() => this.dragonNode.active = false)
                     .start();
-            }
-        })
-        .delay(0.5) // Small buffer for the visual "burst" to finish
-        .call(() => {
-        
-            tween(this.getOpacityComp(this.fireTransitionNode))
-                .to(0.5, { opacity: 0 })
-                .call(() => {
-                    this.fireTransitionNode.active = false;
-                    this.currentStepIndex = 3;
-                    this.updateCharacterVisuals("HAPPY"); 
-                    this.checkCelebration();
-                })
-                .start();
-        })
-        .start();
-}
+
+                tween(this.getOpacityComp(this.fireTransitionNode))
+                    .to(0.3, { opacity: 255 })
+                    .start();
+
+                this.fireplaceFixedAnimSeq.active = true;
+                tween(this.getOpacityComp(this.fireplaceFixedAnimSeq))
+                    .to(0.5, { opacity: 255 })
+                    .start();
+
+                if (this.tableTransition) {
+                    tween(this.getOpacityComp(this.tableTransition.node))
+                        .to(0.5, { opacity: 0 })
+                        .call(() => { this.tableTransition.node.active = false; })
+                        .start();
+                }
+            })
+            .delay(0.5)
+            .call(() => {
+                tween(this.getOpacityComp(this.fireTransitionNode))
+                    .to(0.5, { opacity: 0 })
+                    .call(() => {
+                        this.fireTransitionNode.active = false;
+                        this.currentStepIndex = 3;
+                        this.updateCharacterVisuals("HAPPY"); 
+                        this.checkCelebration();
+                    })
+                    .start();
+            })
+            .start();
+    }
 
     private getOpacityComp(node: Node): UIOpacity {
         let comp = node.getComponent(UIOpacity);
@@ -251,15 +323,6 @@ private playFireplaceSequence() {
         this.setGridVisibility(false);
         this.occupancy.forEach(n => { if (n && n.isValid) n.destroy(); });
         this.occupancy.fill(null);
-    }
-
-    public clearHints() {
-        this.occupancy.forEach(node => {
-            if (node && node.isValid) {
-                const item = node.getComponent(MergeItem);
-                if (item) item.stopHint();
-            }
-        });
     }
 
     private updateCharacterVisuals(state: "HIGH" | "LOW" | "HAPPY") {
