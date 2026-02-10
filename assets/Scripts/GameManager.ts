@@ -1,14 +1,17 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, UIOpacity } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Vec3, tween, Sprite, Color, ParticleSystem2D, UIOpacity, AudioSource } from 'cc';
 import { MergeItem } from './MergeItem';
 import { Draggable } from './Draggable';
 import { VictoryScreen } from './VictoryScreen';
 import { TrashAnimation } from './TrashAnimation'; 
 import { TableTransition } from './TableTransition';
+import { AudioContent } from './AudioContent';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
 export class GameManager extends Component {
+    public static instance: GameManager; // Added for easy access from other scripts
+
     @property([Prefab]) stagePrefabs: Prefab[] = []; 
     @property([Node]) slots: Node[] = []; 
     @property(Node) gridContainer: Node = null!; 
@@ -20,6 +23,11 @@ export class GameManager extends Component {
 
     @property(TrashAnimation) trashAnim: TrashAnimation = null!; 
     @property(TableTransition) tableTransition: TableTransition = null!;
+
+    // --- AUDIO SYSTEM ---
+    @property({ type: [AudioContent] })
+    audioList: AudioContent[] = [];
+    private _audioMap: Map<string, AudioSource> = new Map();
 
     // --- ANIMATION NODES ---
     @property(Node) dragonNode: Node = null!;
@@ -54,6 +62,9 @@ export class GameManager extends Component {
     private hintTimer: number = 0;
 
     onLoad() {
+        GameManager.instance = this; // Singleton assignment
+        this.initAudio();
+
         this.setGridVisibility(false);
         this.updateCharacterVisuals("HIGH");
         if (this.bgWinter) this.bgWinter.active = true;
@@ -68,6 +79,26 @@ export class GameManager extends Component {
             this.decisionUINode.on('DECISION_HELP', this.onStartGame, this);
             this.decisionUINode.on('DECISION_LEAVE', this.onFastForwardToVictory, this);
         }
+    }
+
+    // --- AUDIO METHODS ---
+    private initAudio() {
+        this.audioList.forEach(audioObj => {
+            if (!audioObj || !audioObj.AudioClip) return;
+            
+            let source = audioObj.node.getComponent(AudioSource) || audioObj.node.addComponent(AudioSource);
+            source.clip = audioObj.AudioClip;
+            source.loop = audioObj.Loop;
+            source.volume = audioObj.Volume;
+            source.playOnAwake = false;
+            
+            audioObj.AudioSource = source;
+            this._audioMap.set(audioObj.AudioName, source);
+        });
+    }
+
+    public playAudio(name: string) {
+        this._audioMap.get(name)?.play();
     }
 
     update(dt: number) {
@@ -90,18 +121,15 @@ export class GameManager extends Component {
             }
         });
 
-        // Loop through grid to find matches
         for (let i = 0; i < activeItems.length; i++) {
             for (let j = i + 1; j < activeItems.length; j++) {
                 const itemA = activeItems[i];
                 const itemB = activeItems[j];
 
-                // If level and type match
                 if (itemA.level === itemB.level && itemA.prefabIndex === itemB.prefabIndex) {
                     const posA = itemA.node.worldPosition;
                     const posB = itemB.node.worldPosition;
                     
-                    // Midpoint calculation: M = (A + B) / 2
                     const mid = new Vec3(
                         (posA.x + posB.x) / 2,
                         (posA.y + posB.y) / 2,
@@ -110,14 +138,14 @@ export class GameManager extends Component {
 
                     itemA.playHint(mid);
                     itemB.playHint(mid);
-                    return; // Only trigger one pair at a time
+                    return; 
                 }
             }
         }
     }
 
     public clearHints() {
-        this.hintTimer = 0; // Reset timer on any touch
+        this.hintTimer = 0; 
         this.occupancy.forEach(node => {
             if (node && node.isValid) {
                 const item = node.getComponent(MergeItem);
@@ -126,15 +154,28 @@ export class GameManager extends Component {
         });
     }
 
-    private onStartGame() { this.gameStarted = true; }
-    private onFastForwardToVictory() { if (this.victoryScreen) this.victoryScreen.show(); }
+    private onStartGame() {
+        this.playAudio("Click"); 
+        this.gameStarted = true; 
+        this.playAudio("BGM");
+        this.startCatSadLoop();
+        this.startCoughLoop();          
+    }
+
+    private onFastForwardToVictory() {
+            this.playAudio("Click"); 
+        
+            if (this.victoryScreen) this.victoryScreen.show();
+
+        }
 
     private setGridVisibility(visible: boolean) {
         if (this.gridContainer) this.gridContainer.active = visible;
         if (this.gridVisualImage) this.gridVisualImage.active = visible;
     }
 
-public spawnFromSpawner(prefabIndex: number) {
+    public spawnFromSpawner(prefabIndex: number) {
+        this.playAudio("Select");
         this.setGridVisibility(true);
         
         const coreLevels = [0, 0, 1, 2];
@@ -151,13 +192,11 @@ public spawnFromSpawner(prefabIndex: number) {
 
         const junkLevelSet = [0, 1, 2, 3]; 
 
-        // Spawn for Junk Prefab 1
         if (junkPool.length > 0) {
             const junk1Idx = junkPool[0];
             junkLevelSet.forEach(lvl => this.spawnItem(lvl, junk1Idx));
         }
 
-        // Spawn for Junk Prefab 2
         if (junkPool.length > 1) {
             const junk2Idx = junkPool[1];
             junkLevelSet.forEach(lvl => this.spawnItem(lvl, junk2Idx));
@@ -193,6 +232,7 @@ public spawnFromSpawner(prefabIndex: number) {
             if (scriptA.level === scriptB.level && scriptA.prefabIndex === scriptB.prefabIndex) {
                 this.occupancy[scriptA.currentSlotIndex] = null;
                 this.playMergeParticle(targetOccupant.worldPosition);
+                this.playAudio("Merge"); // Trigger Merge Audio
                 
                 if (scriptB.upgrade()) {
                     this.scheduleOnce(() => {
@@ -214,6 +254,12 @@ public spawnFromSpawner(prefabIndex: number) {
     }
 
     private triggerTrashCollection(finalMergeNode: Node) {
+        
+        this.playAudio("Select");  
+        this.scheduleOnce(() => {
+            this.playAudio("Trash");
+        }, 1.2);
+
         let items: Node[] = [];
         if (finalMergeNode && finalMergeNode.isValid) items.push(finalMergeNode);
         if (this.trashItemsParent) {
@@ -230,16 +276,21 @@ public spawnFromSpawner(prefabIndex: number) {
     }
 
     private executeTransition(stepIndex: number) {
+        this.playAudio("Magic"); // Play the common "Room Fixed" sound
         switch(stepIndex) {
-            case 0: // Floor Fixed
+            case 0: 
                 this.fadeInNode(this.fixedFloor);
                 break;
-            case 1: // Windows Fixed + TABLE TRANSITION
+            case 1: 
                 this.fadeNodes(this.brokenWindows, this.fixedWindows); 
                 this.stopSnowEffect();
                 this.updateCharacterVisuals("LOW");
 
                 if (this.tableTransition) {
+                    this.scheduleOnce(() => {
+                        this.playAudio("TableFix");
+                    }, 0.1);
+                    
                     this.tableTransition.playTransition(() => {
                         this.currentStepIndex = 2; 
                         this.checkCelebration();
@@ -249,8 +300,16 @@ public spawnFromSpawner(prefabIndex: number) {
                     this.checkCelebration();
                 }
                 break;
-            case 2: // Fireplace Transition
+            case 2: 
+                this.stopCatSadLoop();
                 this.playFireplaceSequence();
+                this.playAudio("Select")
+                    this.scheduleOnce(() => {
+                        this.playAudio("DragonBreath");
+                    }, 0.4);
+                    this.scheduleOnce(() => {
+                        this.playAudio("CatHappy");
+                    }, 1.5);                   
                 break;
         }
     }
@@ -387,4 +446,42 @@ public spawnFromSpawner(prefabIndex: number) {
         });
         return nearestIdx;
     }
+
+    public stopAudio(name: string) {
+        const source = this._audioMap.get(name);
+        if (source && source.playing) {
+            source.stop();
+        }
+    }
+    
+    // --- COUGH LOOP (AMARO THDNA LAGCHE) ---
+    private _coughTask = () => {
+        this.playAudio("ColdWind");
+
+        this.playAudio("Cough1");
+    };
+
+    public startCoughLoop() {
+        // Schedule the specific task
+        this.schedule(this._coughTask, 4);
+    }
+
+    public stopCoughLoop() {
+        // Unschedule ONLY the cough task
+        this.unschedule(this._coughTask);
+    }
+
+    // --- Cat Sad ---
+    private _catSadTask = () => {
+        this.playAudio("CatSad");
+    };
+    public startCatSadLoop() {
+        this.playAudio("CatSad");
+        this.schedule(this._catSadTask, 2.5);
+    }
+
+    public stopCatSadLoop() {
+        this.unschedule(this._catSadTask);
+    }
+
 }

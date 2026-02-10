@@ -1,4 +1,5 @@
 import { _decorator, Component, Node, Vec3, tween, Prefab, instantiate } from 'cc';
+import { GameManager } from './GameManager';
 const { ccclass, property, menu } = _decorator;
 
 @ccclass('TableTransition')
@@ -112,6 +113,11 @@ export class TableTransition extends Component {
             .call(() => {
                 this.spawnCandleAtNode(this.fixedBottom);
                 // 2. Trigger the callback here!
+                if (GameManager.instance) {
+                // GameManager.instance.stopAudio("ColdWind");
+                GameManager.instance.stopCoughLoop();
+                // GameManager.instance.stopCatSadLoop();
+            }
                 if (onAllFinished) onAllFinished();
             })
             .start();
