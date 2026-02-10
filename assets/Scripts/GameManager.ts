@@ -463,7 +463,7 @@ export class GameManager extends Component {
 
     public startCoughLoop() {
         // Schedule the specific task
-        this.schedule(this._coughTask, 4);
+        this.schedule(this._coughTask, 1.15);
     }
 
     public stopCoughLoop() {
@@ -477,7 +477,7 @@ export class GameManager extends Component {
     };
     public startCatSadLoop() {
         this.playAudio("CatSad");
-        this.schedule(this._catSadTask, 2.5);
+        this.schedule(this._catSadTask, 2.25);
     }
 
     public stopCatSadLoop() {

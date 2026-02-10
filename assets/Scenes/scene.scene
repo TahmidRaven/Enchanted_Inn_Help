@@ -10420,11 +10420,11 @@
     "__prefab": null,
     "AudioName": "Cough1",
     "AudioClip": {
-      "__uuid__": "671c6f9d-22a3-46e4-a70a-9ecd42832243",
+      "__uuid__": "79017db5-19dd-40f3-9154-6ee36b5e2f44",
       "__expectedType__": "cc.AudioClip"
     },
     "Loop": false,
-    "Volume": 1,
+    "Volume": 0.2,
     "PlayOnLoad": true,
     "OnPlayingStart": {
       "__id__": 300
