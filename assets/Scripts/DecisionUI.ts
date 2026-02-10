@@ -42,9 +42,9 @@ export class DecisionUI extends Component {
 
     onLeaveClicked() {
         console.log("[DecisionUI] Leave button clicked.");
-        this.hide(() => {
-            this.node.emit('DECISION_LEAVE');
-        });
+        // this.hide(() => {
+        //     this.node.emit('DECISION_LEAVE');
+        // });
     }
 
     public hide(onComplete?: Function) {

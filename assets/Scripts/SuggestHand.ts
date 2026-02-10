@@ -142,8 +142,8 @@ export class SuggestHand extends Component {
                     .delay(0.5) 
                     .call(() => { tween(this._uiOpacity).to(0.3, { opacity: 0 }).start(); })
                     
-                    // 5. The Long Wait
-                    .delay(4.5)
+                    // wait for hand to show 
+                    .delay(0.5)
             )
             .start();
     }
