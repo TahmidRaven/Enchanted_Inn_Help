@@ -9324,11 +9324,11 @@
     "__prefab": null,
     "AudioName": "BGM",
     "AudioClip": {
-      "__uuid__": "69b62ef7-c372-44c7-871a-399866cef389",
+      "__uuid__": "0dabdd39-b792-4472-847b-9554ba5cd9d0",
       "__expectedType__": "cc.AudioClip"
     },
     "Loop": true,
-    "Volume": 0.7,
+    "Volume": 0.75,
     "PlayOnLoad": true,
     "OnPlayingStart": {
       "__id__": 315
