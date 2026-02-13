@@ -435,7 +435,7 @@ export class GameManager extends Component {
                 if (this.victoryScreen) {
                     this.victoryScreen.show();
                 }
-            }, 2.5); 
+            }, 2.0); 
         }
     }
 
@@ -459,16 +459,14 @@ export class GameManager extends Component {
     private _coughTask = () => {
         this.playAudio("ColdWind");
 
-        this.playAudio("Cough1");
+        this.playAudio("Shiver");
     };
 
     public startCoughLoop() {
-        // Schedule the specific task
-        this.schedule(this._coughTask, 1.15);
+        this.schedule(this._coughTask, 1.25);
     }
 
     public stopCoughLoop() {
-        // Unschedule ONLY the cough task
         this.unschedule(this._coughTask);
     }
 
