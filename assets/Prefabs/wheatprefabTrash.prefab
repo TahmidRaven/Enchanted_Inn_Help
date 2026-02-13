@@ -152,19 +152,19 @@
     },
     "levelSprites": [
       {
-        "__uuid__": "6daf1919-bbd1-4443-9dad-21b780d4f29b@f9941",
+        "__uuid__": "304bb81e-d65d-4d1b-8000-ceda1ba88bb9@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "e3fe15b8-6749-466d-8ca4-c9a21f3e5225@f9941",
+        "__uuid__": "ae9eb654-ea54-4129-9912-ba1f207703a7@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "e7f831d4-30b5-4835-a09e-77368e395e58@f9941",
+        "__uuid__": "01dcbb3d-6e80-42c2-aea0-12813e2abba1@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "5bd934eb-49d4-4401-8a2e-4dbca35b518a@f9941",
+        "__uuid__": "38a931a8-d184-4b5c-85c6-397ef2730ee4@f9941",
         "__expectedType__": "cc.SpriteFrame"
       }
     ],

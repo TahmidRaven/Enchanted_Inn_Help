@@ -37,7 +37,7 @@ export class GridSuggestionController extends Component {
             tween(this._uiOpacity).stop();
 
             this._uiOpacity.opacity = 0;
-            this.node.setScale(new Vec3(this._initialScale.x * 0.8, this._initialScale.y * 0.8, 1));
+            this.node.setScale(new Vec3(this._initialScale.x * 1.0, this._initialScale.y * 1.0, 1));
 
             tween(this._uiOpacity)
                 .to(0.3, { opacity: 255 })
