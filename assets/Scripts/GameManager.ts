@@ -333,6 +333,7 @@ export class GameManager extends Component {
             .delay(0.65)
             .call(() => {
                 this.fireTransitionNode.active = true;
+                this.updateCharacterVisuals("HAPPY"); 
                 this.fireTransitionNode.setSiblingIndex(this.fireTransitionNode.parent!.children.length - 1);
                 
                 tween(this.getOpacityComp(this.dragonNode))
@@ -363,7 +364,6 @@ export class GameManager extends Component {
                     .call(() => {
                         this.fireTransitionNode.active = false;
                         this.currentStepIndex = 3;
-                        this.updateCharacterVisuals("HAPPY"); 
                         this.checkCelebration();
                     })
                     .start();
@@ -391,6 +391,7 @@ export class GameManager extends Component {
         if (this.allasseShiverHigh) this.allasseShiverHigh.active = (state === "HIGH");
         if (this.allasseShiverLow) this.allasseShiverLow.active = (state === "LOW");
         if (this.allasseHappy) this.allasseHappy.active = (state === "HAPPY");
+        // nymera 
         const finished = (state === "HAPPY");
         if (this.nymeraShiver) this.nymeraShiver.active = !finished;
         if (this.nymeraHappy) this.nymeraHappy.active = finished;
